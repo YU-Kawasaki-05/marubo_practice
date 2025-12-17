@@ -33,3 +33,5 @@
 ## 直近の確認状況
 - リポジトリは Node 18+ で動作する Next.js プロジェクトとしてセットアップ済み。依存関係は pnpm 管理で、モノレポ構成はなし。【F:package.json†L1-L49】
 - Vitest によるサニティテスト (`tests/basic.test.ts`) は成功（2025-02-27 実行）。【60f288†L1-L8】
+- Supabase 招待待ちでも進められるよう、`MOCK_SUPABASE=true` でメモリモックに切り替え可能。Route Handler とモックの挙動を確認するテスト（11件）が `pnpm test` で成功済み（2025-02-27 実行）。【F:tests/api/admin/allowlist.test.ts†L1-L99】【F:tests/allowlistHook.mock.test.tsx†L1-L65】
+- Supabase 初期マイグレーションは `/supabase/migrations/20241204154500_allowlist_audit.sql` に整備済み。`allowed_email` に `updated_by` を含み、`audit_allowlist` で操作履歴を保持する。【F:supabase/migrations/20241204154500_allowlist_audit.sql†L1-L33】

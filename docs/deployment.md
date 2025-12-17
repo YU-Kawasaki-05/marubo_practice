@@ -19,6 +19,7 @@
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=            # サーバーAPIのみ利用（Edge不可）
+MOCK_SUPABASE=                        # 招待待ち/CIでDBをモックする場合に 'true' を設定（本番では空）
 
 # LLM（プライマリ）
 LLM_API_KEY=

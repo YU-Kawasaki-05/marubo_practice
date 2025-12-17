@@ -30,6 +30,7 @@
 | BE-04 | todo | `/api/sync-user` 拡張 | `allowed_email` 状態チェック、エラーコード、レスポンス payload を実装し、`app_user` upsert を idempotent に。 |
 | BE-05 | progress | seed/import スクリプト | `scripts/seed-allowlist.ts` (CSV→bulk upsert) と `export` スクリプトを作成。CSV バリデーションも含む。 |
 | BE-06 | todo | Supabase CLI マイグレーション運用 | `supabase/migrations` に `allowed_email` / `audit_allowlist` 追加分を作成し、`supabase db push` / `pnpm db:migrate` の手順を `README.md` / `docs/deployment.md` に明記。Webコンソールのみでの暫定手順も併記。 |
+| BE-07 | review | Supabase モック切替 | `MOCK_SUPABASE=true` でメモリモックに切り替わるラッパーを実装し、招待待ち・CI でも API/テストが動くようにする。 |
 
 ### 3. フロントエンド実装
 
@@ -48,7 +49,8 @@
 | QA-02 | todo | API 統合テスト | `/api/admin/allowlist` / `/api/sync-user` の happy/sad パスを Vitest + supertest 等でカバー。 |
 | QA-03 | todo | フロント E2E | スタッフが allowlist 追加 → 生徒がログイン完了、退会後にログイン不可までを Playwright 等で自動化。 |
 | QA-04 | todo | スクリプトテスト | CSV seed/export スクリプトの dry-run、バリデーション単体テスト。 |
-| QA-05 | todo | `/api/admin/allowlist` API テスト | Vitest + supertest で GET/POST/PATCH/import の happy/sad ケースをカバーし、Service Role モックや CSV バリデーションを検証する。 |
+| QA-05 | review | `/api/admin/allowlist` API テスト | Vitest + supertest で GET/POST/PATCH/import の happy/sad ケースをカバーし、Service Role モックや CSV バリデーションを検証する。 |
+| QA-06 | review | Supabase モック E2E | MOCK_SUPABASE を用いた簡易 E2E（API→hook まで）を作成し、招待待ちでも回せる回帰テストを用意する。 |
 
 ### 5. 運用 / DevOps
 
