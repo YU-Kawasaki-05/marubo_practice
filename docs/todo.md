@@ -24,8 +24,8 @@
 | **SPEC-02** | review | Allowlist UI/CSV 仕様確定 | (完了済み) `/admin/allowlist` のUX、バリデーション、CSV列定義などを `docs/api.md` に追記済み。 |
 | **SPEC-03** | review | `/api/sync-user` メッセージ定義 | (完了済み) `pending/revoked/not-found` の表示文言を `docs/api.md` に追加済み。 |
 | **SPEC-04** | review | 退会/削除ポリシー整理 | (完了済み) `docs/database.md` に論理削除方針を、`docs/operational/runbook.md` に退会処理手順を追記済み。 |
-| **SPEC-05** | blocked | 保護者共有要件確認 | (ユーザー回答待ち) 許可リストの CSV を保護者に配布するか等の確認。 |
-| **SPEC-06** | todo | Onboarding/README 更新 | **Step 1**: `docs/onboarding.md` に「Supabaseプロジェクトの作成手順」を書く。<br>**Step 2**: `README.md` に「`.env` ファイルの各項目の意味と入手方法」を追記する。<br>**Step 3**: `README.md` に「初回セットアップ時のコマンド手順（`pnpm install` から `pnpm dev` まで）」を整理して書く。 |
+| **SPEC-05** | done | 保護者共有要件確認 | (完了) **方針決定**: 個人情報保護のため、CSVの保護者への配布・共有は行わない。<br>※ 必要な場合はスタッフが個別に連絡する運用とする。 |
+| **SPEC-06** | done | Onboarding/README 更新 | (完了) `docs/onboarding.md` 作成済み。`README.md` にセットアップ手順統合済み。 |
 
 ### 2. バックエンド実装 (BE)
 
@@ -34,10 +34,10 @@
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
 | **BE-01** | todo | `allowed_email` マイグレーション適用 | **Step 1**: `supabase/migrations/20241204154500_allowlist_audit.sql` の内容を確認する（インデックスや制約が含まれているか）。<br>**Step 2**: ローカル開発環境（またはSupabaseプロジェクト）に対し、このSQLが適用されているか確認する。<br>**Step 3**: もし不足しているインデックスがあれば、新しいマイグレーションファイルを作成する。 |
-| **BE-02** | todo | `audit_allowlist` 実装 | **Step 1**: `src/shared/lib/allowlist.ts` 内の作成・更新関数において、`audit_allowlist` テーブルへの insert 処理を追加する。<br>**Step 2**: 操作種別（`insert`, `update`）と変更前後のデータ（`prev`, `next`）が正しく保存されるかテストコードで確認する。 |
+| **BE-02** | review | `audit_allowlist` 実装 | (実装済み) `src/shared/lib/allowlist.ts` に `recordAuditLog` 関数を実装し、作成・更新・CSVインポート時に呼び出していることを確認。 |
 | **BE-03** | review | `/api/admin/allowlist` 実装 | (実装済み) GET/POST/PATCH、CSV受け付け、リクエスト検証などを実装済み。 |
 | **BE-04** | todo | `/api/sync-user` 拡張 | **Step 1**: `app/api/sync-user/route.ts` で、`allowed_email` テーブルを検索する処理を追加する。<br>**Step 2**: メールアドレスの状態（`active`, `pending`, `revoked`）に応じて、適切なエラーまたは成功レスポンスを返す分岐を作る。<br>**Step 3**: `app_user` テーブルへの保存処理を `upsert` (なければ作成、あれば更新) にし、何度呼んでもエラーにならないようにする。 |
-| **BE-05** | progress | seed/import スクリプト | **Step 1**: `scripts/seed-allowlist.ts` で CSV ファイルを読み込む処理を書く。<br>**Step 2**: 読み込んだデータをバリデーション（形式チェック）する処理を書く。<br>**Step 3**: バリデーション済みのデータを DB に一括登録（Bulk Upsert）する処理を書く。 |
+| **BE-05** | todo | seed/import スクリプト | **Step 1**: `scripts/seed-allowlist.ts` で CSV ファイル を読み込む処理を書く。<br>**Step 2**: 読み込んだデータ をバリデーション（形式チェック）する処理を書く。<br>**Step 3**: バリデーション済みのデータを DB に一括登録（Bulk Upsert）する処理を書く。 |
 | **BE-06** | todo | Supabase CLI マイグレーション運用 | **Step 1**: `package.json` に `db:migrate` などのコマンドショートカットを追加する。<br>**Step 2**: `docs/deployment.md` に、本番環境へのマイグレーション適用手順を書く。 |
 | **BE-07** | review | Supabase モック切替 | (実装済み) `MOCK_SUPABASE=true` でメモリモックに切り替わる仕組みを実装済み。 |
 
