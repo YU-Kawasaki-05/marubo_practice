@@ -20,6 +20,15 @@ async function handleRequest(url: string, init?: RequestInit) {
       }),
     )
   }
+  // next/link などが絶対URLで呼ぶ場合を考慮し、ベースURLが入っていても処理
+  if (url.startsWith('http://localhost/api/admin/allowlist') && (!init || init.method === undefined || init.method === 'GET')) {
+    return allowlistGet(
+      new Request(url, {
+        method: 'GET',
+        headers: init?.headers,
+      }),
+    )
+  }
   throw new Error(`Unhandled request: ${url}`)
 }
 
@@ -27,7 +36,7 @@ function TestComponent() {
   const { data, loading, error } = useAllowlistQuery({ fetcher: handleRequest as any, headers: STAFF_HEADER })
 
   if (loading) return <div>loading</div>
-  if (error) return <div>error</div>
+  if (error) return <div>error:{error.message}</div>
   return <div>count:{data?.length ?? 0}</div>
 }
 

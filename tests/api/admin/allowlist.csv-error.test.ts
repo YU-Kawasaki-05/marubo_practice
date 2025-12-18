@@ -45,6 +45,20 @@ describe('/api/admin/allowlist CSV import errors (mock supabase)', () => {
     expect(body.error.code).toBe('STATUS_INVALID')
   })
 
+  it('rejects invalid CSV format', async () => {
+    const csv = 'not,a,csv'
+    const res = await allowlistImportPost(
+      new Request(`${BASE_URL}/import`, {
+        method: 'POST',
+        headers: STAFF_HEADER,
+        body: JSON.stringify({ csv, mode: 'insert' }),
+      }),
+    )
+    const body = await parseJson(res)
+    expect(res.status).toBe(400)
+    expect(body.error.code).toBe('CSV_MISSING_EMAIL') // ヘッダが足りない場合
+  })
+
   it('rejects missing authorization', async () => {
     const csv = ['email,status', 'noauth@example.com,active'].join('\n')
     const res = await allowlistImportPost(

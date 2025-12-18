@@ -4,6 +4,7 @@ import { POST as allowlistPost, GET as allowlistGet } from '../../../app/api/adm
 import { POST as allowlistImportPost } from '../../../app/api/admin/allowlist/import/route'
 import { PATCH as allowlistPatch } from '../../../app/api/admin/allowlist/[email]/route'
 import { resetSupabaseAdminClientForTest } from '../../../src/shared/lib/supabaseAdmin'
+import { useAllowlistMutations } from '../../../src/features/admin/allowlist/hooks/useAllowlistMutations'
 
 const BASE_URL = 'http://localhost/api/admin/allowlist'
 const STAFF_HEADER = { Authorization: 'Bearer staff-token', 'Content-Type': 'application/json' }
@@ -124,5 +125,34 @@ describe('/api/admin/allowlist (mock supabase)', () => {
     const body = await parseJson(res)
     expect(res.status).toBe(401)
     expect(body.error.code).toBe('UNAUTHORIZED')
+  })
+
+  it('mutations hook can update status without reload', async () => {
+    const createReq = new Request(BASE_URL, {
+      method: 'POST',
+      headers: STAFF_HEADER,
+      body: JSON.stringify({ email: 'hook-mutate@example.com', status: 'active' }),
+    })
+    await allowlistPost(createReq)
+
+    // build a simple mock fetcher that routes to PATCH
+    const fetcher = async (url: string, init?: RequestInit) => {
+      if (url.startsWith('/api/admin/allowlist/') && init?.method === 'PATCH') {
+        const email = url.split('/').pop()!
+        return allowlistPatch(
+          new Request(`${BASE_URL}/${email}`, {
+            method: 'PATCH',
+            headers: init.headers,
+            body: init.body,
+          }),
+          { params: { email } },
+        )
+      }
+      throw new Error(`Unhandled request ${url}`)
+    }
+
+    const { updateAllowedEmail } = useAllowlistMutations({ fetcher, headers: STAFF_HEADER })
+    const res = await updateAllowedEmail('hook-mutate@example.com', { status: 'revoked' })
+    expect(res.status).toBe('revoked')
   })
 })

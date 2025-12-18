@@ -1,11 +1,21 @@
 import Link from 'next/link'
+import { useMemo, useState } from 'react'
 
 import { useAllowlistQuery } from '../../../src/features/admin/allowlist/hooks/useAllowlistQuery'
+import { useAllowlistMutations } from '../../../src/features/admin/allowlist/hooks/useAllowlistMutations'
+
+type AllowedEmailStatus = 'active' | 'pending' | 'revoked'
 
 export const runtime = 'nodejs'
 
 export default function AllowlistPage() {
-  const { data, loading, error } = useAllowlistQuery()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<AllowedEmailStatus | 'all'>('all')
+  const { data, loading, error } = useAllowlistQuery({
+    search: search || undefined,
+    status: statusFilter,
+  })
+  const { updateAllowedEmail } = useAllowlistMutations()
 
   if (loading) {
     return (
@@ -38,6 +48,30 @@ export default function AllowlistPage() {
         </Link>
       </header>
 
+      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <input
+            type="search"
+            placeholder="メールやラベルで検索"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm md:w-1/2"
+            aria-label="検索"
+          />
+          <select
+            aria-label="ステータス絞り込み"
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm md:w-40"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as AllowedEmailStatus | 'all')}
+          >
+            <option value="all">すべて</option>
+            <option value="active">active</option>
+            <option value="pending">pending</option>
+            <option value="revoked">revoked</option>
+          </select>
+        </div>
+      </section>
+
       <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
           <div className="space-y-1">
@@ -46,23 +80,38 @@ export default function AllowlistPage() {
           </div>
         </div>
         <div className="divide-y divide-slate-200">
-          {data?.map((item) => (
+          {filtered(data, search, statusFilter)?.map((item) => (
             <div key={item.email} className="flex items-center justify-between px-4 py-3">
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-slate-900">{item.email}</p>
                 <p className="text-xs text-slate-600">label: {item.label ?? '-'}</p>
               </div>
-              <span
-                className={`rounded-full px-2 py-1 text-xs font-semibold ${
-                  item.status === 'active'
-                    ? 'bg-green-100 text-green-700'
-                    : item.status === 'pending'
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-red-100 text-red-700'
-                }`}
-              >
-                {item.status}
-              </span>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                    item.status === 'active'
+                      ? 'bg-green-100 text-green-700'
+                      : item.status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
+                >
+                  {item.status}
+                </span>
+                <StatusDropdown
+                  current={item.status as AllowedEmailStatus}
+                  onChange={async (next) => {
+                    if (next === item.status) return
+                    try {
+                      await updateAllowedEmail(item.email, { status: next })
+                      // 再フェッチで最新状態を反映
+                      window.location.reload()
+                    } catch (err) {
+                      alert((err as Error).message)
+                    }
+                  }}
+                />
+              </div>
             </div>
           ))}
           {(!data || data.length === 0) && (
@@ -70,6 +119,29 @@ export default function AllowlistPage() {
           )}
         </div>
       </section>
+
+      <CsvImportPreview />
     </main>
   )
 }
+
+type StatusDropdownProps = {
+  current: AllowedEmailStatus
+  onChange: (status: AllowedEmailStatus) => Promise<void>
+}
+
+function StatusDropdown({ current, onChange }: StatusDropdownProps) {
+  return (
+    <select
+      aria-label="ステータス変更"
+      className="rounded border border-slate-300 px-2 py-1 text-sm"
+      defaultValue={current}
+      onChange={(e) => onChange(e.target.value as AllowedEmailStatus)}
+    >
+      <option value="active">active</option>
+      <option value="pending">pending</option>
+      <option value="revoked">revoked</option>
+    </select>
+  )
+}
+import { CsvImportPreview } from './components/CsvImportPreview'
