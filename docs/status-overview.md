@@ -35,3 +35,9 @@
 - Vitest によるサニティテスト (`tests/basic.test.ts`) は成功（2025-02-27 実行）。【60f288†L1-L8】
 - Supabase 招待待ちでも進められるよう、`MOCK_SUPABASE=true` でメモリモックに切り替え可能。Route Handler とモックの挙動を確認するテスト（11件）が `pnpm test` で成功済み（2025-02-27 実行）。【F:tests/api/admin/allowlist.test.ts†L1-L99】【F:tests/allowlistHook.mock.test.tsx†L1-L65】
 - Supabase 初期マイグレーションは `/supabase/migrations/20241204154500_allowlist_audit.sql` に整備済み。`allowed_email` に `updated_by` を含み、`audit_allowlist` で操作履歴を保持する。【F:supabase/migrations/20241204154500_allowlist_audit.sql†L1-L33】
+
+## 今後のアクションメモ（忘備録）
+- supertest の導入はネットワーク制限で保留中。必要時にネットワーク許可を取り、`pnpm install` の再構成後に `pnpm add -D supertest` を実行する。
+- Supabase 招待が来たら BE-06 に沿って `supabase db push` または SQL Editor でマイグレーションを適用し、実 DB で `/api/admin/allowlist` を確認する。
+- フロント最小 UI: 既存 hooks（useAllowlistQuery/useAllowlistMutations）を使い、一覧＋検索のプレースホルダを先に作る。モック環境で疎通確認可能。
+- テスト拡充: CSV import のエラーケースや hook のローディング/エラー表示テストを追加して回帰性を高める。
