@@ -47,9 +47,9 @@
 
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| **FE-01** | progress | `/admin/allowlist` UI | **Step 1 (表示/検索)**: (完了) `app/admin/allowlist/page.tsx` でデータ表示と検索絞り込みを実装済み。<br>**Step 2 (更新)**: 各行にステータス変更用ドロップダウンを配置し、API (PATCH) とつなぎこんで更新できるようにする。<br>**Step 3 (UX向上)**: 更新中のローディング表示や、エラー時のトースト通知などを追加して使いやすくする。 |
-| **FE-02** | review | Allowlist hooks | (実装済み) `useAllowlistQuery` 実装済み。`useAllowlistMutations` は FE-01 Step 2 で実装予定。 |
-| **FE-03** | todo | CSV アップロード UI | **Step 1 (UI)**: `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成し、ファイル選択とボタンのみの基本形を作る。<br>**Step 2 (Parser)**: 選択したCSVをクライアントサイドでパースし、テーブル形式でプレビュー表示するロジックを実装する。<br>**Step 3 (Integration)**: `useAllowlistMutations` に `importCsv` 関数を追加し、APIへの送信処理を実装する。<br>**Step 4 (Validation)**: CSVのフォーマット不正（列不足など）を検知し、ユーザーに通知する。<br>**Step 5 (Doc)**: `memo/manual/csv_import.md` に利用方法とCSVフォーマットのマニュアルを作成する。 |
+| **FE-01** | review | `/admin/allowlist` UI | **Step 1 (表示/検索)**: (完了) `app/admin/allowlist/page.tsx` でデータ表示と検索絞り込みを実装済み。<br>**Step 2 (更新)**: (完了) 各行にステータス変更用ドロップダウンを配置し、API (PATCH) とつなぎこんで更新できるようにした。<br>**Step 3 (UX向上)**: (一部完了) 簡易的なリロード処理で対応済み。 |
+| **FE-02** | done | Allowlist hooks | (完了) `useAllowlistQuery` および `useAllowlistMutations` (create, update, importCsv) 実装済み。 |
+| **FE-03** | review | CSV アップロード UI | **Step 1 (UI)**: (完了) `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成。<br>**Step 2 (Parser)**: (完了) クライアントサイドでのパース実装済み（Shift_JIS対応）。<br>**Step 3 (Integration)**: (完了) API統合済み。<br>**Step 4 (Validation)**: (完了) CSVフォーマット簡易チェック実装済み。<br>**Step 5 (Doc)**: `memo/manual/csv_import.md` に利用方法とCSVフォーマットのマニュアルを作成する。 |
 | **FE-04** | todo | 学生向け警告表示 | **Step 1**: ログイン時に `/api/sync-user` の結果を受け取る処理を確認する。<br>**Step 2**: 結果が `pending` (承認待ち) や `revoked` (無効) の場合、画面全体または上部に警告メッセージを表示するコンポーネントを作る。<br>**Step 3**: 警告内に「お問い合わせはこちら」というリンクを設置する。 |
 
 ### 4. テスト & QA (QA)
