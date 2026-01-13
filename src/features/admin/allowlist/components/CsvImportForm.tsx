@@ -9,15 +9,20 @@ type ParseResult = {
   error?: string
 }
 
-export function CsvImportForm() {
+export function CsvImportForm({ onImport }: { onImport: (csv: string, mode: 'insert' | 'upsert') => Promise<void> }) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<ParseResult | null>(null)
   const [isParsing, setIsParsing] = useState(false)
+  const [csvText, setCsvText] = useState<string>('')
+  const [isImporting, setIsImporting] = useState(false)
+  const [isUpsert, setIsUpsert] = useState(false)
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0]
     setFile(selected || null)
     setPreview(null) // ファイルが変わったらプレビューをリセット
+    setCsvText('')
+    setIsUpsert(false) // ファイル変更時にリセット
   }
 
   const handlePreview = async () => {
@@ -39,12 +44,35 @@ export function CsvImportForm() {
         text = decoder.decode(buffer)
       }
 
+      setCsvText(text)
       const result = parseCsvClient(text)
       setPreview(result)
     } catch (err: any) {
       alert(`CSV読み込みに失敗しました: ${err.message}`)
     } finally {
       setIsParsing(false)
+    }
+  }
+
+  const handleImport = async () => {
+    if (!csvText) return
+    if (!confirm(isUpsert ? '既存のデータを上書き更新します。よろしいですか？' : 'この内容で登録しますか？')) return
+
+    setIsImporting(true)
+    try {
+      await onImport(csvText, isUpsert ? 'upsert' : 'insert')
+      alert('一括登録が完了しました')
+      setFile(null)
+      setPreview(null)
+      setCsvText('')
+      setIsUpsert(false)
+      if (document.querySelector('input[type="file"]') instanceof HTMLInputElement) {
+        (document.querySelector('input[type="file"]') as HTMLInputElement).value = ''
+      }
+    } catch (err: any) {
+      alert(`登録エラー: ${err.message}`)
+    } finally {
+      setIsImporting(false)
     }
   }
 
@@ -82,15 +110,40 @@ export function CsvImportForm() {
       )}
 
       {/* プレビューボタン */}
-      <div className="mt-6 flex gap-4">
+      <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center">
         <button
           type="button"
-          disabled={!file || isParsing}
+          disabled={!file || isParsing || isImporting}
           onClick={handlePreview}
           className="rounded bg-slate-200 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-300 disabled:opacity-50"
         >
           {isParsing ? '解析中...' : 'プレビュー'}
         </button>
+
+        {preview && !preview.error && (
+          <>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="upsert-mode"
+                checked={isUpsert}
+                onChange={(e) => setIsUpsert(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <label htmlFor="upsert-mode" className="text-sm font-medium text-slate-700 select-none">
+                既に登録済みのメールがあれば上書き更新する
+              </label>
+            </div>
+            <button
+              type="button"
+              disabled={isImporting}
+              onClick={handleImport}
+              className="rounded bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {isImporting ? '登録中...' : '一括登録を実行'}
+            </button>
+          </>
+        )}
       </div>
 
       {/* プレビュー表示エリア */}

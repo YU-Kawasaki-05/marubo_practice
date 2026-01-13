@@ -38,7 +38,7 @@ export default function AllowlistPage() {
     headers, // 定義済みの headers を渡す
   })
 
-  const { updateAllowedEmail } = useAllowlistMutations({ headers })
+  const { updateAllowedEmail, importCsv } = useAllowlistMutations({ headers })
 
   // セッション確認中またはデータ読み込み中の表示
   if (isCheckingSession || (loading && !error)) {
@@ -147,7 +147,12 @@ export default function AllowlistPage() {
         </div>
       </section>
 
-      <CsvImportForm />
+      <CsvImportForm
+        onImport={async (csv, mode) => {
+          await importCsv(csv, mode)
+          window.location.reload()
+        }}
+      />
     </main>
   )
 }
