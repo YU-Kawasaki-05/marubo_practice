@@ -59,12 +59,11 @@
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
 | **QA-01** | todo | RLS/Allowed Email テスト | **Step 1**: テストコードで「スタッフ以外のユーザー」を作成する。<br>**Step 2**: そのユーザーで `allowed_email` テーブルを読み書きしようとして、エラーになることを確認する。 |
-| **QA-02** | todo | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。 |
+| **QA-02** | review | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。（`tests/api/admin/allowlist.test.ts` で実装済み） |
 | **QA-03** | todo | フロント E2E | (Playwright等の導入が必要なため、後回しでも可) 手動で「スタッフで追加 → 生徒でログイン」の流れを確認する手順書を作るだけでもOK。 |
 | **QA-04** | todo | スクリプトテスト | `scripts/seed-allowlist.ts` を `--dry-run` (書き込まないモード) で実行し、エラーが出ないか確認する。 |
-| **QA-05** | review | `/api/admin/allowlist` API テスト | (実装済み) Vitest + supertest でカバー済み。 |
+| **QA-05** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
 | **QA-06** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
-| **FE-05** | todo | Allowlist 一覧プレースホルダ | `app/admin/allowlist/page.tsx` に最小 UI（一覧/件数表示）を実装し、後続の検索/フィルタ/更新 UI の土台にする。 |
 
 ### 5. 運用 / DevOps (OPS)
 
