@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { AccountStatusBanner } from '../src/features/allowlist/components/AccountStatusBanner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -13,7 +14,10 @@ type RootLayoutProps = {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="ja">
-      <body>{children}</body>
+      <body>
+        <AccountStatusBanner />
+        {children}
+      </body>
     </html>
   )
 }

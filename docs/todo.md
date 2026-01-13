@@ -50,7 +50,7 @@
 | **FE-01** | review | `/admin/allowlist` UI | **Step 1 (表示/検索)**: (完了) `app/admin/allowlist/page.tsx` でデータ表示と検索絞り込みを実装済み。<br>**Step 2 (更新)**: (完了) 各行にステータス変更用ドロップダウンを配置し、API (PATCH) とつなぎこんで更新できるようにした。<br>**Step 3 (UX向上)**: (一部完了) 簡易的なリロード処理で対応済み。 |
 | **FE-02** | done | Allowlist hooks | (完了) `useAllowlistQuery` および `useAllowlistMutations` (create, update, importCsv) 実装済み。 |
 | **FE-03** | review | CSV アップロード UI | **Step 1 (UI)**: (完了) `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成。<br>**Step 2 (Parser)**: (完了) クライアントサイドでのパース実装済み（Shift_JIS対応）。<br>**Step 3 (Integration)**: (完了) API統合済み。<br>**Step 4 (Validation)**: (完了) CSVフォーマット簡易チェック実装済み。<br>**Step 5 (Doc)**: `memo/manual/csv_import.md` に利用方法とCSVフォーマットのマニュアルを作成する。 |
-| **FE-04** | todo | 学生向け警告表示 | **Step 1**: ログイン時に `/api/sync-user` の結果を受け取る処理を確認する。<br>**Step 2**: 結果が `pending` (承認待ち) や `revoked` (無効) の場合、画面全体または上部に警告メッセージを表示するコンポーネントを作る。<br>**Step 3**: 警告内に「お問い合わせはこちら」というリンクを設置する。 |
+| **FE-04** | review | 学生向け警告表示 | **Step 1 (RLS設定)**: (完了) `allowed_email` に `SELECT` 許可ポリシーを追加済み。<br>**Step 2 (データ取得)**: (完了) `useMyAllowlistStatus` 実装済み。<br>**Step 3 (警告UI)**: (完了) `AccountStatusBanner` 実装済み。<br>**Step 4 (配置)**: (完了) `app/layout.tsx` にバナーを配置済み。 |
 
 ### 4. テスト & QA (QA)
 
