@@ -364,14 +364,16 @@ function ensureMaxLength(value: string | null | undefined, max: number) {
 function assertStatusTransition(current: AllowedEmailStatus, next: AllowedEmailStatus) {
   if (current === next) return
 
+  // 管理者の手動変更なので、基本的には全ステータス間の遷移を許可する
+  // (ビジネスロジックで制限したい場合はここを調整してください)
   const allowed: Record<AllowedEmailStatus, AllowedEmailStatus[]> = {
-    pending: ['active'],
-    active: ['revoked'],
-    revoked: ['active'],
+    pending: ['active', 'revoked'],
+    active: ['pending', 'revoked'],
+    revoked: ['active', 'pending'],
   }
 
   if (!allowed[current]?.includes(next)) {
-    throw new AppError(400, 'STATUS_TRANSITION_FORBIDDEN', 'この status 変更は許可されていません。')
+    throw new AppError(400, 'STATUS_TRANSITION_FORBIDDEN', `この status 変更は許可されていません (${current} -> ${next})。`)
   }
 }
 

@@ -33,11 +33,16 @@ export function useAllowlistQuery(options: UseAllowlistQueryOptions = {}) {
     ;(async () => {
       try {
         setLoading(true)
-        const url = new URL('/api/admin/allowlist', 'http://localhost')
-        if (search) url.searchParams.set('search', search)
-        if (status && status !== 'all') url.searchParams.set('status', status)
+        setError(null)
+        // URLSearchParams を使ってクエリパラメータを構築（相対パスを利用）
+        const params = new URLSearchParams()
+        if (search) params.set('search', search)
+        if (status && status !== 'all') params.set('status', status)
 
-        const res = await fetcher(url.toString(), { headers: headersMemo })
+        const queryValue = params.toString()
+        const endpoint = `/api/admin/allowlist${queryValue ? `?${queryValue}` : ''}`
+
+        const res = await fetcher(endpoint, { headers: headersMemo })
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
           throw new Error(body?.error?.message ?? `Failed to load allowlist (${res.status})`)
