@@ -74,6 +74,61 @@
 
 ---
 
+## `/api/chat` — チャット送信 (Streaming)
+
+| | 内容 |
+|---|---|
+| **Method** | `POST` |
+| **Auth** | Supabase セッション必須（ログイン済み全ユーザーが利用可） |
+| **Runtime** | Node.js (Edge Runtime ではなく Node.js を利用。※Vercel AI SDK は両対応だが各種ライブラリ互換性のため) |
+| **責務** | ユーザーのメッセージ履歴を受け取り、AI の応答をストリーミング形式 (`text/event-stream`) で返す。 |
+
+### リクエスト
+
+```json
+{
+  "messages": [
+    { "role": "user", "content": "こんにちは" },
+    { "role": "assistant", "content": "こんにちは！何かお手伝いしましょうか？" },
+    { "role": "user", "content": "数学について教えて" }
+  ]
+}
+```
+
+* `messages`: Vercel AI SDK の `Message` 型配列。
+* 画像を含める場合、Vercel AI SDK の仕様に従い `experimental_attachments` や `content` 内の画像URLとして渡すことを想定。
+
+### 正常レスポンス (Streaming)
+
+```
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Transfer-Encoding: chunked
+X-Vercel-AI-Data-Stream: true
+
+0:"もちろんです。"
+0:"どの"
+0:"分野"
+...
+```
+
+* 通常の JSON レスポンスではなく、Vercel AI SDK Data Stream Protocol に従ったテキストストリームが返却される。
+* クライアント側は `useChat` フックがこれを自動的にパースして状態を更新する。
+
+### エラーレスポンス
+
+ストリーム開始前のエラー（認証切れ、バリデーションエラー等）は通常の JSON エラーを返す。
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+ストリーム途中でのエラーは、ストリーム内でエラーチャンクが送信される場合がある。
+
+---
+
 ## `/api/admin/allowlist` — 許可メール CRUD
 
 | | 内容 |
