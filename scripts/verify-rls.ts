@@ -1,3 +1,9 @@
+import 'dotenv/config'
+
+// .env.local を明示的に読み込む
+import dotenv from 'dotenv'
+dotenv.config({ path: '.env.local' })
+
 import { createClient } from '@supabase/supabase-js'
 
 /**
