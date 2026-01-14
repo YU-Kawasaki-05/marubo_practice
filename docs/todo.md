@@ -65,6 +65,7 @@
 | **QA-05** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
 | **QA-06** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
 
+// ...existing code...
 ### 5. 運用 / DevOps (OPS)
 
 | ID | Status | 概要 | 詳細ステップ (Step) |
@@ -73,6 +74,18 @@
 | **OPS-02** | done | CI 更新 | **Step 1**: (完了) `.github/workflows/test.yml` を作成し、Push時に Lint/Typecheck/Test が実行されるように構成済み。 |
 | **OPS-03** | blocked | Allowlist 変更通知設計 | (ユーザー確認待ち) |
 | **OPS-04** | review | README 統合反映 | (完了確認) `README.new.md` が削除され、`README.md` に統合されているか確認する。 |
+
+### 6. チャット機能実装 (CHAT)
+
+教育用AIチャットの中核機能を実装します。
+
+| ID | Status | 概要 | 詳細ステップ (Step) |
+|----|--------|------|------|
+| **CHAT-01** | todo | 技術選定 & セットアップ | **Step 1**: Vercel AI SDK (`ai`), `openai` SDK をインストールする。<br>**Step 2**: 環境変数 (`OPENAI_API_KEY`) を `.env.local` に設定する。 |
+| **CHAT-02** | todo | バックエンド API 実装 | **Step 1**: `/app/api/chat/route.ts` を作成する。<br>**Step 2**: ユーザー入力を受け取り、OpenAI API にリクエストを送り、ストリーミングレスポンスを返す処理を実装する。<br>**Step 3**: システムプロンプト（「あなたは親切な先生です」等）を設定する。 |
+| **CHAT-03** | todo | チャット UI 実装 | **Step 1**: `src/features/chat/components/ChatInterface.tsx` を作成する。<br>**Step 2**: `useChat` フックを使ってメッセージの送受信、履歴表示を実装する。<br>**Step 3**: Markdown形式のレスポンス（数式含む）を綺麗に表示できるよう `RequestMarkdown` 等を調整する。 |
+| **CHAT-04** | todo | 画面統合 | **Step 1**: `/app/chat/page.tsx` (またはトップページ) に ChatInterface を配置する。<br>**Step 2**: ログインしていないユーザーや、Allowlist無効ユーザーには使わせないガード処理を入れる。 |
+| **CHAT-05** | todo | DB保存 (オプション) | **Step 1**: 会話履歴をSupabaseに保存するテーブル設計を行う(今回は必須ではないが将来的に必要)。 |
 
 ---
 
