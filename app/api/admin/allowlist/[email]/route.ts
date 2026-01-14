@@ -8,11 +8,11 @@
 
 export const runtime = 'nodejs'
 
+import { updateAllowlistEntry, type UpdateAllowlistPayload } from '../../../../../src/shared/lib/allowlist'
 import { errorResponse } from '../../../../../src/shared/lib/errors'
-import { jsonResponse } from '../../../../../src/shared/lib/response'
 import { parseJsonBody, generateRequestId } from '../../../../../src/shared/lib/request'
 import { requireStaff } from '../../../../../src/shared/lib/requireStaff'
-import { updateAllowlistEntry, type UpdateAllowlistPayload } from '../../../../../src/shared/lib/allowlist'
+import { jsonResponse } from '../../../../../src/shared/lib/response'
 
 type RouteContext = {
   params: { email: string }

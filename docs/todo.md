@@ -1,7 +1,12 @@
 # TODO / Roadmap
 
-本書は、今後実装予定の機能や改善点を整理する **開発ロードマップ** である。
-スプリント計画・優先度の共有・開発の進捗管理を目的とする。
+本書は、今後実装予定の機能や改善点を整理する **開発ロードマップ** です。
+初心者でも着実に開発を進められるよう、タスクを細かいステップ（Step）に分解しています。
+
+**進め方のコツ**:
+1. 基本的に **ID順** または **Step順** に進めてください。
+2. 1つのStepが終わるごとに、動作確認（`pnpm dev` や `pnpm test`）を行うと手戻りが少なくなります。
+3. 詰まったら、前のStepに戻って見直すか、エラーログを確認しましょう。
 
 ---
 
@@ -9,54 +14,66 @@
 
 > **Status Legend**: `todo` = 未着手, `progress` = 進行中, `blocked` = 調整待ち, `review` = 実装済みレビュー待ち, `done` = 完了
 
-### 1. 仕様・ドキュメント整備
+### 1. 仕様・ドキュメント整備 (SPEC)
 
-| ID | Status | 概要 | 詳細 |
+開発の迷いをなくすための「地図」を作るフェーズです。
+
+| ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| SPEC-01 | todo | 許可メール運用詳細追記 | `docs/security.md` / `docs/architecture.md` に招待文面、CSV取り扱い、監査ログ保持期間を明記する。 |
-| SPEC-02 | review | Allowlist UI/CSV 仕様確定 | `/admin/allowlist` のUX、バリデーション、CSV列定義、重複時の挙動を `docs/api.md` に追記済み。 |
-| SPEC-03 | review | `/api/sync-user` メッセージ定義 | `pending/revoked/not-found` のフロント表示文言と問い合わせ導線を `docs/api.md` に追加済み。 |
-| SPEC-04 | todo | 退会/削除ポリシー整理 | 会話・添付の保持期限、削除手順を `docs/database.md` と `docs/operational/runbook.md` に追記。 |
-| SPEC-05 | blocked | 保護者共有要件確認 | 許可リストの CSV を保護者に配布するか等、ユーザー確認が必要。回答待ち。 |
+| **SPEC-01** | review | 許可メール運用詳細追記 | (完了済み) `docs/security.md` に招待メール文面と監査ログ保持期間を、`docs/architecture.md` にCSV取り扱いルールを追記済み。 |
+| **SPEC-02** | review | Allowlist UI/CSV 仕様確定 | (完了済み) `/admin/allowlist` のUX、バリデーション、CSV列定義などを `docs/api.md` に追記済み。 |
+| **SPEC-03** | review | `/api/sync-user` メッセージ定義 | (完了済み) `pending/revoked/not-found` の表示文言を `docs/api.md` に追加済み。 |
+| **SPEC-04** | review | 退会/削除ポリシー整理 | (完了済み) `docs/database.md` に論理削除方針を、`docs/operational/runbook.md` に退会処理手順を追記済み。 |
+| **SPEC-05** | done | 保護者共有要件確認 | (完了) **方針決定**: 個人情報保護のため、CSVの保護者への配布・共有は行わない。<br>※ 必要な場合はスタッフが個別に連絡する運用とする。 |
+| **SPEC-06** | done | Onboarding/README 更新 | (完了) `docs/onboarding.md` 作成済み。`README.md` にセットアップ手順統合済み。 |
 
-### 2. バックエンド実装
+### 2. バックエンド実装 (BE)
 
-| ID | Status | 概要 | 詳細 |
+サーバー側のロジックとデータベース周りを整備します。
+
+| ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| BE-01 | todo | `allowed_email` マイグレーション | `updated_by`, `label`, `notes`, `status` index、`allowed_email_lowercase` 制約を SQL に反映。 |
-| BE-02 | todo | `audit_allowlist` 追加 | 操作種別・差分を保存する監査テーブルと挿入処理を実装。 |
-| BE-03 | review | `/api/admin/allowlist` 実装 | GET/POST/PATCH、CSV受け付け、リクエスト検証、`requestId` 付与、`staff` ガードを `app/api/admin/allowlist/*` で実装済み。 |
-| BE-04 | todo | `/api/sync-user` 拡張 | `allowed_email` 状態チェック、エラーコード、レスポンス payload を実装し、`app_user` upsert を idempotent に。 |
-| BE-05 | progress | seed/import スクリプト | `scripts/seed-allowlist.ts` (CSV→bulk upsert) と `export` スクリプトを作成。CSV バリデーションも含む。 |
+| **BE-01** | done | `allowed_email` マイグレーション適用 | (完了) **手動適用済み**: Supabase WebコンソールのSQL Editorにて、`20241204154500_allowlist_audit.sql` ベースのSQLを実行・適用済み。 |
+| **BE-02** | review | `audit_allowlist` 実装 | (実装済み) `src/shared/lib/allowlist.ts` に `recordAuditLog` 関数を実装し、作成・更新・CSVインポート時に呼び出していることを確認。 |
+| **BE-03** | review | `/api/admin/allowlist` 実装 | (実装済み) GET/POST/PATCH、CSV受け付け、リクエスト検証などを実装済み。 |
+| **BE-04** | review | `/api/sync-user` 拡張 | (実装済み) `active` で同期、`pending/revoked` でエラー、`not-found` で拒否するロジックを実装済み。 |
+| **BE-05** | review | seed/import スクリプト | (実装済み) `scripts/seed-allowlist.ts` を作成。`scripts/data/allowlist.sample.csv` からデータを読み込み、Seed Bot ユーザー経由で DB に登録/更新できることを確認。 |
+| **BE-06** | todo | Supabase CLI マイグレーション運用 | **Step 1**: `package.json` に `db:migrate` などのコマンドショートカットを追加する。<br>**Step 2**: `docs/deployment.md` に、本番環境へのマイグレーション適用手順を書く。 |
+| **BE-07** | review | Supabase モック切替 | (実装済み) `MOCK_SUPABASE=true` でメモリモックに切り替わる仕組みを実装済み。 |
 
-### 3. フロントエンド実装
+### 3. フロントエンド実装 (FE)
 
-| ID | Status | 概要 | 詳細 |
+ここが一番「動いている感」が出る部分です。小さく作っていきましょう。
+
+| ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| FE-01 | todo | `/admin/allowlist` UI | 一覧・検索・フィルタ・status切替モーダル・notes入力・`requestId` 表示を実装。 |
-| FE-02 | todo | Allowlist hooks | `useAllowlistQuery`, `useAllowlistMutations`, `useCsvImport` の hooks/型整備。 |
-| FE-03 | todo | CSV アップロード UI | 取り込みプレビュー、検証エラー表示、成功/失敗トーストを実装。 |
-| FE-04 | todo | 学生向け警告表示 | `/api/sync-user` の `allowedEmailStatus` から Pending/Revoked メッセージを表示し、問い合わせ先リンクを追加。 |
+| **FE-01** | review | `/admin/allowlist` UI | **Step 1 (表示/検索)**: (完了) `app/admin/allowlist/page.tsx` でデータ表示と検索絞り込みを実装済み。<br>**Step 2 (更新)**: (完了) 各行にステータス変更用ドロップダウンを配置し、API (PATCH) とつなぎこんで更新できるようにした。<br>**Step 3 (UX向上)**: (一部完了) 簡易的なリロード処理で対応済み。 |
+| **FE-02** | done | Allowlist hooks | (完了) `useAllowlistQuery` および `useAllowlistMutations` (create, update, importCsv) 実装済み。 |
+| **FE-03** | done | CSV アップロード UI | **Step 1 (UI)**: (完了) `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成。<br>**Step 2 (Parser)**: (完了) クライアントサイドでのパース実装済み（Shift_JIS対応）。<br>**Step 3 (Integration)**: (完了) API統合済み。<br>**Step 4 (Validation)**: (完了) CSVフォーマット簡易チェック実装済み。<br>**Step 5 (Doc)**: (完了) `docs/manual/csv_import.md` を作成済み。 |
+| **FE-04** | done | 学生向け警告表示 | **Step 1 (RLS設定)**: (完了) `allowed_email` に `SELECT` 許可ポリシーを追加済み。<br>**Step 2 (データ取得)**: (完了) `useMyAllowlistStatus` 実装済み。<br>**Step 3 (警告UI)**: (完了) `AccountStatusBanner` 実装済み。<br>**Step 4 (配置)**: (完了) `app/layout.tsx` にバナーを配置済み。 |
 
-### 4. テスト & QA
+### 4. テスト & QA (QA)
 
-| ID | Status | 概要 | 詳細 |
+作ったものが壊れていないか確認する作業です。
+
+| ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| QA-01 | todo | RLS/Allowed Email テスト | Supabase クライアントで `allowed_email` が staff 以外アクセス不可か、`/api/sync-user` が状態通りに動くか検証。 |
-| QA-02 | todo | API 統合テスト | `/api/admin/allowlist` / `/api/sync-user` の happy/sad パスを Vitest + supertest 等でカバー。 |
-| QA-03 | todo | フロント E2E | スタッフが allowlist 追加 → 生徒がログイン完了、退会後にログイン不可までを Playwright 等で自動化。 |
-| QA-04 | todo | スクリプトテスト | CSV seed/export スクリプトの dry-run、バリデーション単体テスト。 |
+| **QA-01** | done | RLS/Allowed Email テスト | **Step 1**: (完了) `scripts/verify-rls.ts` を作成。<br>**Step 2**: 匿名/未許可ユーザーで0件、許可ユーザーで1件のみ閲覧できることを検証済み。 |
+| **QA-02** | done | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。（`tests/api/admin/allowlist.test.ts` で実装済み） |
+| **QA-03** | todo | フロント E2E | (Playwright等の導入が必要なため、後回しでも可) 手動で「スタッフで追加 → 生徒でログイン」の流れを確認する手順書を作るだけでもOK。 |
+| **QA-04** | todo | スクリプトテスト | `scripts/seed-allowlist.ts` を `--dry-run` (書き込まないモード) で実行し、エラーが出ないか確認する。 |
+| **QA-05** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
+| **QA-06** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
 
-### 5. 運用 / DevOps
+### 5. 運用 / DevOps (OPS)
 
-| ID | Status | 概要 | 詳細 |
+| ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| OPS-01 | todo | Migration ワークフロー整理 | Supabase CLI で migration/seed を実行する手順 (`pnpm db:migrate` など) を README/docs に明記。 |
-| OPS-02 | todo | CI 更新 | GitHub Actions で `pnpm lint && pnpm typecheck && pnpm test` を必須化、`pnpm db:check` などを検討。 |
-| OPS-03 | blocked | Allowlist 変更通知設計 | 変更を Slack/メール通知するかユーザーへ確認。必要なら Implementation タスク追加。 |
-| OPS-04 | review | README 統合反映 | `README.new.md` 廃止の旨を changelog/docs に記載済みか再確認。 |
+| **OPS-01** | todo | Migration ワークフロー整理 | `BE-06` と重複するため、そちらで実施。 |
+| **OPS-02** | done | CI 更新 | **Step 1**: (完了) `.github/workflows/test.yml` を作成し、Push時に Lint/Typecheck/Test が実行されるように構成済み。 |
+| **OPS-03** | blocked | Allowlist 変更通知設計 | (ユーザー確認待ち) |
+| **OPS-04** | review | README 統合反映 | (完了確認) `README.new.md` が削除され、`README.md` に統合されているか確認する。 |
 
 ---
 
 必要な情報や優先度が変わった場合は、このファイルで随時アップデートしてください。
-

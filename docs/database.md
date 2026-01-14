@@ -9,6 +9,25 @@
 - 月次集計（monthly_summary）
 - usage_counters によるクォータ/レート設計
 - ER 図とリレーション
+- データ削除ポリシー
+
+---
+
+## データ削除ポリシー
+
+原則として、**物理削除（DELETE）は行わず、ステータス変更による論理削除**を採用する。
+これにより、操作ミスによるデータ消失を防ぎ、退会後の監査（不適切な利用の調査など）を可能にする。
+
+### 1. ユーザーの退会・削除
+* **手法**: `allowed_email` テーブルの `status` を `'revoked'` に更新する。
+* **挙動**:
+    * 対象のメールアドレスではログインできなくなる。
+    * 過去の会話データ（`conversation`, `message`）は**保持される**。
+    * スタッフ画面からは「退会済み」として参照可能。
+
+### 2. データの物理削除が必要な場合
+* 個人情報保護の観点から、ユーザー本人より「全データの完全消去」を強く求められた場合に限り、DB管理者が手動で物理削除を行う（運用対応）。
+* その際、`on delete cascade` 制約により、ユーザーに紐づく会話・メッセージ・添付ファイルは自動的に削除される。
 
 ---
 
@@ -44,12 +63,27 @@ create table if not exists allowed_email (
   expires_at timestamptz,
   notes text,
   created_by uuid references app_user(id) on delete set null,
+  updated_by uuid references app_user(id) on delete set null,
   updated_at timestamptz default now(),
   created_at timestamptz default now(),
   constraint allowed_email_lowercase check (email = lower(email))
 );
 
 create index if not exists idx_allowed_email_status on allowed_email(status);
+
+-- 監査ログ（allowlist 変更履歴）
+create table if not exists audit_allowlist (
+  id uuid primary key default gen_random_uuid(),
+  request_id text not null,
+  email text not null references allowed_email(email) on delete cascade,
+  prev jsonb,
+  next jsonb,
+  operation text not null check (operation in ('insert','update','csv-import')),
+  staff_user_id uuid not null references app_user(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_audit_allowlist_email_created on audit_allowlist(email, created_at desc);
 
 -- 4) 会話
 create table if not exists conversation (
@@ -120,6 +154,7 @@ create index if not exists idx_rate_limiter_key on rate_limiter(key);
 
 * `allowed_email.status` は `active`（利用可）/`pending`（まだ利用不可）/`revoked`（退会済み）の 3 値で管理する。`/app/api/sync-user` は `active` のみユーザー作成を許可し、それ以外は 403 を返して UI に「塾に連絡してください」のメッセージを表示する。
 * `allowed_email` はスタッフのみ閲覧・編集できるよう、RLS で `(auth.jwt() -> 'app_metadata' ->> 'role') = 'staff'` のみ select/insert/update/delete を許可する。Service Role API（管理 UI や seed script）ではバルク登録が可能。
+* 変更履歴は `audit_allowlist` に `prev`/`next`/`operation`/`request_id`/`staff_user_id` を保存し、少なくとも 90 日以上保持する。
 * `usage_counters.day` は API 層で `(now() at time zone 'Asia/Tokyo')::date` を用いて JST 基準で算出し、CHECK 制約によりマイナス値の混入を即座に検知する。
 * `rate_limiter.key` には `chat:user:{user_id}` や `chat:ip:{ip}` などの識別子を格納し、`window_start` には `date_trunc('minute', now())` など固定長ウィンドウの先頭を保存する。
 * API からは `select allow_request('chat:user:xxx', 10, 60);` のような Postgres 関数（例：`allow_request(p_key text, p_limit int, p_window_seconds int)`）を呼び出し、false の場合は HTTP 429 を返して処理を中断する。

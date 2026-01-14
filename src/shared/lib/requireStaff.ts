@@ -7,8 +7,8 @@
  */
 
 import { AppError } from './errors'
-import { getSupabaseAdminClient } from './supabaseAdmin'
 import { getBearerToken } from './request'
+import { getSupabaseAdminClient } from './supabaseAdmin'
 
 type StaffContext = {
   authUserId: string

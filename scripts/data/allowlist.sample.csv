@@ -1,0 +1,4 @@
+email,status,label,notes
+student1@example.com,active,ClassA,Math
+student2@example.com,pending,ClassB,English
+revoked@example.com,revoked,ClassC,Bad behavior

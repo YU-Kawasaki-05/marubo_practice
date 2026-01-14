@@ -9,12 +9,20 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 import type { Database } from '../types/database'
+
 import { requireEnv } from './env'
+import { getMockSupabaseAdminClient, isMockSupabaseEnabled } from './supabaseAdmin.mock'
 
 let adminClient: SupabaseClient<Database> | null = null
 
 export function getSupabaseAdminClient(): SupabaseClient<Database> {
   if (adminClient) return adminClient
+
+  if (isMockSupabaseEnabled()) {
+    adminClient = getMockSupabaseAdminClient()
+    return adminClient
+  }
+
   const url = requireEnv('SUPABASE_URL')
   const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
 
@@ -27,4 +35,9 @@ export function getSupabaseAdminClient(): SupabaseClient<Database> {
   })
 
   return adminClient
+}
+
+// テスト用：モック状態をリセット
+export function resetSupabaseAdminClientForTest() {
+  adminClient = null
 }
