@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, ChangeEvent } from 'react'
-import type { AllowedEmailStatus } from '../../../../../shared/types/database'
+import type { ChangeEvent } from 'react';
+import { useState } from 'react'
+
 
 type ParseResult = {
   header: string[]
@@ -47,8 +48,9 @@ export function CsvImportForm({ onImport }: { onImport: (csv: string, mode: 'ins
       setCsvText(text)
       const result = parseCsvClient(text)
       setPreview(result)
-    } catch (err: any) {
-      alert(`CSV読み込みに失敗しました: ${err.message}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      alert(`CSV読み込みに失敗しました: ${message}`)
     } finally {
       setIsParsing(false)
     }
@@ -69,8 +71,9 @@ export function CsvImportForm({ onImport }: { onImport: (csv: string, mode: 'ins
       if (document.querySelector('input[type="file"]') instanceof HTMLInputElement) {
         (document.querySelector('input[type="file"]') as HTMLInputElement).value = ''
       }
-    } catch (err: any) {
-      alert(`登録エラー: ${err.message}`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      alert(`登録エラー: ${message}`)
     } finally {
       setIsImporting(false)
     }

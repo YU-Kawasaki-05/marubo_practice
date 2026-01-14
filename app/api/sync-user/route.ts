@@ -1,9 +1,10 @@
 import { type NextRequest } from 'next/server'
+
 import { AppError, errorResponse } from '../../../src/shared/lib/errors'
 import { generateRequestId, getBearerToken } from '../../../src/shared/lib/request'
 import { jsonResponse } from '../../../src/shared/lib/response'
 import { getSupabaseAdminClient } from '../../../src/shared/lib/supabaseAdmin'
-import type { AllowedEmailRow, AppUserRow } from '../../../src/shared/types/database'
+import type { AllowedEmailRow } from '../../../src/shared/types/database'
 
 export const runtime = 'nodejs'
 
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
     // No, upsert usually requires all required fields for insert.
     // Let's use clean approach:
     
-    const { data: existingUser, error: fetchError } = await supabase
+    const { data: existingUser } = await supabase
       .from('app_user')
       .select('id, role')
       .eq('auth_uid', user.id)

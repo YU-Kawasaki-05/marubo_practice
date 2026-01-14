@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 import type {
@@ -59,7 +60,7 @@ class MockQuery<T extends Record<string, any>> implements PromiseLike<SelectResp
     const match = condition.match(/\.ilike\.\%(.+)\%/)
     if (match && this.tableName === 'allowed_email') {
       const keyword = match[1]
-      this.filters.push((row) => matchesAllowedSearch(row as AllowedEmailRow, keyword))
+      this.filters.push((row) => matchesAllowedSearch(row as unknown as AllowedEmailRow, keyword))
     }
     return this
   }
@@ -118,7 +119,7 @@ class MockQuery<T extends Record<string, any>> implements PromiseLike<SelectResp
   }
 
   private async execute(): Promise<SelectResponse<T>> {
-    const table = this.tables[this.tableName] as T[]
+    const table = this.tables[this.tableName] as unknown as T[]
     if (this.operation === 'insert') {
       const incoming = (this.payload as T[]).map((row) => this.normalizeInsert(row))
       table.push(...incoming)

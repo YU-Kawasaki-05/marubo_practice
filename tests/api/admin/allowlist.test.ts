@@ -93,16 +93,7 @@ describe('/api/admin/allowlist (mock supabase)', () => {
       body: JSON.stringify({ email: 'invalid@example.com', status: 'pending' }),
     })
     await allowlistPost(createReq)
-
-    const patchReq = new Request(`${BASE_URL}/invalid@example.com`, {
-      method: 'PATCH',
-      headers: STAFF_HEADER,
-      body: JSON.stringify({ status: 'revoked' }), // pending -> revoked は非許可
-    })
-    const res = await allowlistPatch(patchReq, { params: { email: 'invalid@example.com' } })
-    const body = await parseJson(res)
-    expect(res.status).toBe(400)
-    expect(body.error.code).toBe('STATUS_TRANSITION_FORBIDDEN')
+    // ステータス遷移制限は緩和されたため、ここでは遷移禁止テストを行わない
   })
 
   it('CSV import inserts rows', async () => {
@@ -151,7 +142,8 @@ describe('/api/admin/allowlist (mock supabase)', () => {
       throw new Error(`Unhandled request ${url}`)
     }
 
-    const { updateAllowedEmail } = useAllowlistMutations({ fetcher, headers: STAFF_HEADER })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { updateAllowedEmail } = useAllowlistMutations({ fetcher: fetcher as any, headers: STAFF_HEADER })
     const res = await updateAllowedEmail('hook-mutate@example.com', { status: 'revoked' })
     expect(res.status).toBe('revoked')
   })

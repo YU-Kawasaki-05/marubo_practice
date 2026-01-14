@@ -26,7 +26,9 @@ export function useAllowlistQuery(options: UseAllowlistQueryOptions = {}) {
   const [error, setError] = useState<Error | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const headersMemo = useMemo(() => headers, [headers && JSON.stringify(headers)])
+  const headersKey = headers ? JSON.stringify(headers) : ''
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const headersMemo = useMemo(() => headers, [headersKey])
 
   useEffect(() => {
     let mounted = true

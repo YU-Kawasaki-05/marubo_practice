@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+
 import { getSupabaseBrowserClient } from '../../src/shared/lib/supabaseClient'
 
 export default function LoginPage() {
@@ -29,11 +30,12 @@ export default function LoginPage() {
       // ログイン成功したら管理画面へ
       router.push('/admin/allowlist')
       // router.refresh() // 必要に応じてキャッシュ更新
-    } catch (err: any) {
-      if (err.message.includes('Invalid login credentials')) {
+    } catch (err) {
+      const error = err as Error
+      if (error.message.includes('Invalid login credentials')) {
         setMessage('メールアドレスまたはパスワードが間違っています。')
       } else {
-        setMessage(`ログインエラー: ${err.message}`)
+        setMessage(`ログインエラー: ${error.message}`)
       }
     } finally {
       setIsLoading(false)
@@ -53,12 +55,15 @@ export default function LoginPage() {
         throw error
       }
       setMessage('登録確認メールを送信しました。（開発環境等でオートコンファームの場合はそのままログインボタンを押してください）')
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      if (err.message.includes('invalid')) {
-        setMessage(`エラー: メールアドレスの形式が無効か、許可されていないドメインです。別のメールアドレス（例: student1@example.com や Gmailなど）を試してください。\n詳細: ${err.message}`)
+      const error = err as Error
+      if (error.message.includes('invalid')) {
+        setMessage(`エラー: メールアドレスの形式が無効か、許可されていないドメインです。別のメールアドレス（例: student1@example.com や Gmailなど）を試してください。\n詳細: ${error.message}`)
+      } else if (error.message.includes('User already registered')) {
+        setMessage('このメールアドレスは既に登録されています。ログインしてください。')
       } else {
-        setMessage(`登録エラー: ${err.message}`)
+        setMessage(`エラーが発生しました: ${error.message}`)
       }
     } finally {
       setIsLoading(false)

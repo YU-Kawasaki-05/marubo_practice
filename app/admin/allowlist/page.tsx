@@ -3,9 +3,9 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 
-import { useAllowlistQuery } from '../../../src/features/admin/allowlist/hooks/useAllowlistQuery'
-import { useAllowlistMutations } from '../../../src/features/admin/allowlist/hooks/useAllowlistMutations'
 import { CsvImportForm } from '../../../src/features/admin/allowlist/components/CsvImportForm'
+import { useAllowlistMutations } from '../../../src/features/admin/allowlist/hooks/useAllowlistMutations'
+import { useAllowlistQuery } from '../../../src/features/admin/allowlist/hooks/useAllowlistQuery'
 import { getSupabaseBrowserClient } from '../../../src/shared/lib/supabaseClient'
 
 type AllowedEmailStatus = 'active' | 'pending' | 'revoked'
@@ -131,8 +131,9 @@ export default function AllowlistPage() {
                       await updateAllowedEmail(item.email, { status: nextStatus })
                       // 更新成功したらリロードで反映（初心者向けの実装）
                       window.location.reload()
-                    } catch (err: any) {
-                      alert(`更新エラー: ${err.message}`)
+                    } catch (err) {
+                      const message = err instanceof Error ? err.message : '予期せぬエラーが発生しました'
+                      alert(`更新エラー: ${message}`)
                     }
                   }}
                 />

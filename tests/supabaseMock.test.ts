@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { getSupabaseAdminClient } from '../src/shared/lib/supabaseAdmin'
 
@@ -28,7 +28,8 @@ describe('Supabase admin client mock', () => {
 
     const { data, error } = await supabase.from('allowed_email').select('*').eq('email', 'student@example.com').single()
     expect(error).toBeNull()
-    expect(data?.email).toBe('student@example.com')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect((data as any)?.email).toBe('student@example.com')
   })
 
   it('provides staff auth user when token matches', async () => {

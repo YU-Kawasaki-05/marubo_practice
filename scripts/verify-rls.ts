@@ -32,7 +32,7 @@ async function main() {
   console.log('--- QA-01: RLS Security Check ---')
 
   // 1. Anon Client (No Auth)
-  const anonClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  const anonClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!)
   
   console.log('\n[Check 1] Trying to fetch allowed_email as Anonymous (No Login)...')
   const { data: anonData, error: anonError } = await anonClient
@@ -56,7 +56,7 @@ async function main() {
   const userToken = process.env.TEST_USER_TOKEN
   if (userToken) {
     console.log('\n[Check 2] Trying to fetch allowed_email as Logged-in User...')
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const userClient = createClient(SUPABASE_URL!, SUPABASE_ANON_KEY!, {
       global: { headers: { Authorization: `Bearer ${userToken}` } }
     })
     
