@@ -8,15 +8,15 @@
 
 export const runtime = 'nodejs'
 
-import { AppError, errorResponse } from '../../../../src/shared/lib/errors'
-import { jsonResponse } from '../../../../src/shared/lib/response'
-import { parseJsonBody, generateRequestId } from '../../../../src/shared/lib/request'
-import { requireStaff } from '../../../../src/shared/lib/requireStaff'
 import {
   createAllowlistEntry,
   listAllowlistEntries,
   type CreateAllowlistPayload,
 } from '../../../../src/shared/lib/allowlist'
+import { AppError, errorResponse } from '../../../../src/shared/lib/errors'
+import { parseJsonBody, generateRequestId } from '../../../../src/shared/lib/request'
+import { requireStaff } from '../../../../src/shared/lib/requireStaff'
+import { jsonResponse } from '../../../../src/shared/lib/response'
 import type { AllowedEmailStatus } from '../../../../src/shared/types/database'
 
 export async function GET(request: Request) {

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+
 import { AccountStatusBanner } from '../src/features/allowlist/components/AccountStatusBanner'
 import './globals.css'
 

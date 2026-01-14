@@ -6,13 +6,14 @@
  * セキュリティ: すべてのメールは lowercase/trim して比較。Service Role での書き込み時に WHERE を必ず指定。
  */
 
-import { AppError } from './errors'
-import { getSupabaseAdminClient } from './supabaseAdmin'
 import type {
   AllowedEmailRow,
   AllowedEmailStatus,
   Database,
 } from '../types/database'
+
+import { AppError } from './errors'
+import { getSupabaseAdminClient } from './supabaseAdmin'
 
 const EMAIL_MAX_LENGTH = 320
 const LABEL_MAX_LENGTH = 64

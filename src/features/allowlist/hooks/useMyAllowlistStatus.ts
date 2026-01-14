@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+
 import { getSupabaseBrowserClient } from '../../../shared/lib/supabaseClient'
 import type { AllowedEmailStatus } from '../../../shared/types/database'
 
