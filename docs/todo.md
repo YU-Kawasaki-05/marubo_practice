@@ -49,8 +49,8 @@
 |----|--------|------|------|
 | **FE-01** | review | `/admin/allowlist` UI | **Step 1 (表示/検索)**: (完了) `app/admin/allowlist/page.tsx` でデータ表示と検索絞り込みを実装済み。<br>**Step 2 (更新)**: (完了) 各行にステータス変更用ドロップダウンを配置し、API (PATCH) とつなぎこんで更新できるようにした。<br>**Step 3 (UX向上)**: (一部完了) 簡易的なリロード処理で対応済み。 |
 | **FE-02** | done | Allowlist hooks | (完了) `useAllowlistQuery` および `useAllowlistMutations` (create, update, importCsv) 実装済み。 |
-| **FE-03** | review | CSV アップロード UI | **Step 1 (UI)**: (完了) `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成。<br>**Step 2 (Parser)**: (完了) クライアントサイドでのパース実装済み（Shift_JIS対応）。<br>**Step 3 (Integration)**: (完了) API統合済み。<br>**Step 4 (Validation)**: (完了) CSVフォーマット簡易チェック実装済み。<br>**Step 5 (Doc)**: `memo/manual/csv_import.md` に利用方法とCSVフォーマットのマニュアルを作成する。 |
-| **FE-04** | review | 学生向け警告表示 | **Step 1 (RLS設定)**: (完了) `allowed_email` に `SELECT` 許可ポリシーを追加済み。<br>**Step 2 (データ取得)**: (完了) `useMyAllowlistStatus` 実装済み。<br>**Step 3 (警告UI)**: (完了) `AccountStatusBanner` 実装済み。<br>**Step 4 (配置)**: (完了) `app/layout.tsx` にバナーを配置済み。 |
+| **FE-03** | done | CSV アップロード UI | **Step 1 (UI)**: (完了) `src/features/admin/allowlist/components/CsvImportForm.tsx` を作成。<br>**Step 2 (Parser)**: (完了) クライアントサイドでのパース実装済み（Shift_JIS対応）。<br>**Step 3 (Integration)**: (完了) API統合済み。<br>**Step 4 (Validation)**: (完了) CSVフォーマット簡易チェック実装済み。<br>**Step 5 (Doc)**: (完了) `docs/manual/csv_import.md` を作成済み。 |
+| **FE-04** | done | 学生向け警告表示 | **Step 1 (RLS設定)**: (完了) `allowed_email` に `SELECT` 許可ポリシーを追加済み。<br>**Step 2 (データ取得)**: (完了) `useMyAllowlistStatus` 実装済み。<br>**Step 3 (警告UI)**: (完了) `AccountStatusBanner` 実装済み。<br>**Step 4 (配置)**: (完了) `app/layout.tsx` にバナーを配置済み。 |
 
 ### 4. テスト & QA (QA)
 
@@ -58,8 +58,8 @@
 
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| **QA-01** | todo | RLS/Allowed Email テスト | **Step 1**: テストコードで「スタッフ以外のユーザー」を作成する。<br>**Step 2**: そのユーザーで `allowed_email` テーブルを読み書きしようとして、エラーになることを確認する。 |
-| **QA-02** | review | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。（`tests/api/admin/allowlist.test.ts` で実装済み） |
+| **QA-01** | done | RLS/Allowed Email テスト | **Step 1**: (完了) `scripts/verify-rls.ts` を作成。<br>**Step 2**: 匿名/未許可ユーザーで0件、許可ユーザーで1件のみ閲覧できることを検証済み。 |
+| **QA-02** | done | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。（`tests/api/admin/allowlist.test.ts` で実装済み） |
 | **QA-03** | todo | フロント E2E | (Playwright等の導入が必要なため、後回しでも可) 手動で「スタッフで追加 → 生徒でログイン」の流れを確認する手順書を作るだけでもOK。 |
 | **QA-04** | todo | スクリプトテスト | `scripts/seed-allowlist.ts` を `--dry-run` (書き込まないモード) で実行し、エラーが出ないか確認する。 |
 | **QA-05** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
@@ -70,7 +70,7 @@
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
 | **OPS-01** | todo | Migration ワークフロー整理 | `BE-06` と重複するため、そちらで実施。 |
-| **OPS-02** | todo | CI 更新 | **Step 1**: `.github/workflows/test.yml` (なければ作成) に、`pnpm lint`, `pnpm typecheck`, `pnpm test` を実行するステップを追加する。 |
+| **OPS-02** | done | CI 更新 | **Step 1**: (完了) `.github/workflows/test.yml` を作成し、Push時に Lint/Typecheck/Test が実行されるように構成済み。 |
 | **OPS-03** | blocked | Allowlist 変更通知設計 | (ユーザー確認待ち) |
 | **OPS-04** | review | README 統合反映 | (完了確認) `README.new.md` が削除され、`README.md` に統合されているか確認する。 |
 
