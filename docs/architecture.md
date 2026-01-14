@@ -50,8 +50,10 @@
 
 * **フロント**：Next.js 14+（App Router, TypeScript, Tailwind, Zustand）
   Markdown/LaTeX：`react-markdown` + `remark-gfm` + `remark-math` + `rehype-katex`
+  AI Client：`Vercel AI SDK (ai)` - `useChat`フックによるステート管理とストリーミング受信
 * **バックエンド**：Supabase（Auth/Postgres/Storage）、Next.js Route Handlers（/app/api/\*\*、 **Node.js runtime**）
-* **LLM**：プライマリ + フォールバック（可能な限り別ベンダー/エンドポイント）呼び出し
+* **LLM**：Vercel AI SDK Core (`@ai-sdk/openai`)
+  プライマリ + フォールバック構成（可能な限り別ベンダー/エンドポイント）
 * **メール**：Resend（送信ドメインは SPF/DKIM/DMARC 必須）
 * **スケジュール**：Vercel Cron（毎日 23:55 JST）
 * **テスト**：Vitest（`jsdom`）+ React Testing Library
