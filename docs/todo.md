@@ -81,9 +81,9 @@
 
 | ID | Status | 概要 | 詳細ステップ (Step) |
 |----|--------|------|------|
-| **CHAT-01** | todo | 技術選定 & セットアップ | **Step 1**: Vercel AI SDK (`ai`), `openai` SDK をインストールする。<br>**Step 2**: 環境変数 (`OPENAI_API_KEY`) を `.env.local` に設定する。 |
-| **CHAT-02** | todo | バックエンド API 実装 | **Step 1**: `/app/api/chat/route.ts` を作成する。<br>**Step 2**: ユーザー入力を受け取り、OpenAI API にリクエストを送り、ストリーミングレスポンスを返す処理を実装する。<br>**Step 3**: システムプロンプト（「あなたは親切な先生です」等）を設定する。 |
-| **CHAT-03** | todo | チャット UI 実装 | **Step 1**: `src/features/chat/components/ChatInterface.tsx` を作成する。<br>**Step 2**: `useChat` フックを使ってメッセージの送受信、履歴表示を実装する。<br>**Step 3**: Markdown形式のレスポンス（数式含む）を綺麗に表示できるよう `RequestMarkdown` 等を調整する。 |
+| **CHAT-01** | done | 技術選定 & セットアップ | **Step 1**: (完了) Vercel AI SDK (`ai`), `openai` SDK をインストール済み。<br>**Step 2**: (完了) 環境変数 (`OPENAI_API_KEY`) を `.env.local` に設定済み。 |
+| **CHAT-02** | done | バックエンド API 実装 | **Step 1**: (完了) `/app/api/chat/route.ts` を作成済み。<br>**Step 2**: (完了) `streamText` を用いてOpenAIへのストリーミングリクエストを実装済み。<br>**Step 3**: (完了) システムプロンプトを設定済み。 |
+| **CHAT-03** | todo | チャット UI 実装 | **Step 1**: `src/features/chat/components/ChatInterface.tsx` を作成し、`useChat` でメッセージ送受信を行えるようにする。<br>**Step 2**: メッセージ表示用コンポーネント (`MessageBubble`) を作成し、ユーザー/AIの表示を使い分ける。<br>**Step 3**: 数式・Markdown表示用コンポーネント (`MemoizedMarkdown`) を作成し、`react-markdown` + `katex` を適用する。 |
 | **CHAT-04** | todo | 画面統合 | **Step 1**: `/app/chat/page.tsx` (またはトップページ) に ChatInterface を配置する。<br>**Step 2**: ログインしていないユーザーや、Allowlist無効ユーザーには使わせないガード処理を入れる。 |
 | **CHAT-05** | todo | DB保存 (オプション) | **Step 1**: 会話履歴をSupabaseに保存するテーブル設計を行う(今回は必須ではないが将来的に必要)。 |
 
