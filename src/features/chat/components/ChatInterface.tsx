@@ -26,9 +26,9 @@ function ChatInterfaceInner({ token }: { token: string }) {
   const [input, setInput] = useState('')
   
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
+    // api: '/api/chat', // デフォルトが '/api/chat' なので省略可 (型エラー回避)
     // プロトコルをData Stream (デフォルト) に戻す
-    headers: { 'Authorization': `Bearer ${token}` },
+    // headers: { 'Authorization': `Bearer ${token}` }, // useChat初期化オプションにはheadersがないため削除
     onError: (error) => {
       console.error('Chat API Error:', error)
       alert('エラーが発生しました: ' + error.message)
@@ -71,11 +71,12 @@ function ChatInterfaceInner({ token }: { token: string }) {
     
     try {
       // sendMessage を使ってメッセージを追加・送信
+      // v6.0.33 の型定義に従い { role, content } ではなく { text } を渡す (または CreateUIMessage)
+      // headers はここで渡す必要がある
       await sendMessage({
-        role: 'user',
-        content: userMessage,
+        text: userMessage,
       }, {
-        // 明示的にヘッダーを渡す (useChatのheadersが効かない場合の保険)
+        // 明示的にヘッダーを渡す
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -87,13 +88,27 @@ function ChatInterfaceInner({ token }: { token: string }) {
   }
 
   return (
-    <div className="flex flex-col h-[600px] border rounded-lg bg-white shadow-sm max-w-2xl mx-auto my-8">
+    <div className="flex flex-col h-full bg-white max-w-4xl mx-auto">
       {/* メッセージ表示エリア */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
-          <div className="text-center text-gray-500 mt-10">
-            <p>こんにちは！何か質問はありますか？</p>
-            <p className="text-sm">例: 「二次方程式の解の公式を教えて」</p>
+          <div className="text-center text-gray-500 mt-20">
+            <h2 className="text-xl font-bold mb-2">こんにちは！</h2>
+            <p>学習に関する質問を自由にしてください。</p>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg mx-auto text-sm text-left">
+              <button 
+                onClick={() => { setInput('二次方程式の解の公式を教えて'); }}
+                className="p-3 border rounded-lg hover:bg-gray-50 transition text-gray-700"
+              >
+                「二次方程式の解の公式を教えて」
+              </button>
+              <button 
+                 onClick={() => { setInput('英単語の効率的な覚え方は？'); }}
+                 className="p-3 border rounded-lg hover:bg-gray-50 transition text-gray-700"
+              >
+                「英単語の効率的な覚え方は？」
+              </button>
+            </div>
           </div>
         )}
         
@@ -103,7 +118,7 @@ function ChatInterfaceInner({ token }: { token: string }) {
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 rounded-lg p-3 text-gray-500 animate-pulse">
+            <div className="bg-gray-100 rounded-lg p-3 text-gray-500 animate-pulse text-sm">
               AIが考え中...
             </div>
           </div>
@@ -111,10 +126,10 @@ function ChatInterfaceInner({ token }: { token: string }) {
       </div>
 
       {/* 入力フォームエリア */}
-      <div className="border-t p-4 bg-gray-50">
-        <form onSubmit={onSubmit} className="flex gap-2">
+      <div className="border-t p-4 bg-white sticky bottom-0 z-10">
+        <form onSubmit={onSubmit} className="flex gap-2 max-w-4xl mx-auto">
           <input
-            className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             value={input}
             onChange={handleInputChange}
             placeholder="メッセージを入力..."
@@ -122,7 +137,7 @@ function ChatInterfaceInner({ token }: { token: string }) {
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded-md disabled:bg-blue-300 hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg disabled:bg-gray-300 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors shadow-sm"
             disabled={isLoading || !input?.trim()}
           >
             送信
@@ -140,22 +155,30 @@ export function ChatInterface() {
   const [token, setToken] = useState<string | null>(null)
   const [isAuthChecking, setIsAuthChecking] = useState(true)
 
-  // マウント時にセッショントークンを取得
+  // マウント時にセッシュントークンを取得し、変更を監視する
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
-    const fetchSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (session) {
-          setToken(session.access_token)
-        }
-      } catch (e) {
-        console.error('Auth Check Error:', e)
-      } finally {
-        setIsAuthChecking(false)
+    
+    // 初期化: 現在のセッションを取得
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setToken(session.access_token)
       }
+      setIsAuthChecking(false)
+    })
+
+    // 監視: 認証状態（トークンリフレッシュ等）の変化をリッスン
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setToken(session.access_token)
+      } else {
+        setToken(null)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
     }
-    fetchSession()
   }, [])
 
   // まだ認証情報の取得が終わっていない場合

@@ -1,9 +1,9 @@
-import { type Message } from 'ai'
+import { type UIMessage } from 'ai'
 import { MemoizedMarkdown } from './MemoizedMarkdown'
 import { normalizeMathDelimiters } from '../utils/normalizeMath'
 
 interface MessageBubbleProps {
-  message: Message
+  message: UIMessage
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
@@ -12,7 +12,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   // AI SDK v6 Data Stream Protocol対応:
   // message.content が空でも message.parts にテキストが含まれている場合はそれを結合して表示する
   const rawContent =
-    message.content ||
+    (message as any).content ||
     message.parts
       ?.filter((part) => part.type === 'text')
       .map((part) => part.text)

@@ -30,11 +30,12 @@ export async function convertSafeMessages(messages: UIMessage[]): Promise<ModelM
 
     // partsが存在せず、contentが文字列の場合の正規化
     // v6のconvertToModelMessagesはpartsの存在を期待するケースがあるため、明示的に構築する
-    if (!msg.parts && typeof msg.content === 'string') {
+    const msgAny = msg as any
+    if (!msg.parts && typeof msgAny.content === 'string') {
       return {
         ...msg,
-        parts: [{ type: 'text', text: msg.content } as const],
-      };
+        parts: [{ type: 'text', text: msgAny.content } as const],
+      }
     }
 
     // 既にpartsが存在する場合、またはcontentもpartsもない場合（空メッセージ）はそのまま通過させる
