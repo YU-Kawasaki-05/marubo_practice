@@ -83,7 +83,7 @@
 |----|--------|------|------|
 | **CHAT-01** | done | 技術選定 & セットアップ | **Step 1**: (完了) Vercel AI SDK (`ai`), `openai` SDK をインストール済み。<br>**Step 2**: (完了) 環境変数 (`OPENAI_API_KEY`) を `.env.local` に設定済み。 |
 | **CHAT-02** | done | バックエンド API 実装 | **Step 1**: (完了) `/app/api/chat/route.ts` を作成済み。<br>**Step 2**: (完了) `streamText` を用いてOpenAIへのストリーミングリクエストを実装済み。<br>**Step 3**: (完了) システムプロンプトを設定済み。 |
-| **CHAT-03** | todo | チャット UI 実装 | **Step 1**: `src/features/chat/components/ChatInterface.tsx` を作成し、`useChat` でメッセージ送受信を行えるようにする。<br>**Step 2**: メッセージ表示用コンポーネント (`MessageBubble`) を作成し、ユーザー/AIの表示を使い分ける。<br>**Step 3**: 数式・Markdown表示用コンポーネント (`MemoizedMarkdown`) を作成し、`react-markdown` + `katex` を適用する。 |
+| **CHAT-03** | progress | チャット UI 実装 | **Step 1**: `src/features/chat/components/ChatInterface.tsx` を作成し、`useChat` でメッセージ送受信を行えるようにする。<br>**Step 1.5 (Fix done)**: Supabase認証トークンを `useChat` に正しく渡すため、コンポーネントを分割してトークン取得後に初期化するように修正済み。<br>**Step 1.6 (Debug)**: `toDataStreamResponse is not a function` エラーを調査中。`ai` パッケージのバージョン (v6.0.33?) と API の整合性を確認する。<br>**Step 2**: メッセージ表示用コンポーネント (`MessageBubble`) を作成し、ユーザー/AIの表示を使い分ける。<br>**Step 3**: 数式・Markdown表示用コンポーネント (`MemoizedMarkdown`) を作成し、`react-markdown` + `katex` を適用する。 |
 | **CHAT-04** | todo | 画面統合 | **Step 1**: `/app/chat/page.tsx` (またはトップページ) に ChatInterface を配置する。<br>**Step 2**: ログインしていないユーザーや、Allowlist無効ユーザーには使わせないガード処理を入れる。 |
 | **CHAT-05** | todo | DB保存 (オプション) | **Step 1**: 会話履歴をSupabaseに保存するテーブル設計を行う(今回は必須ではないが将来的に必要)。 |
 
