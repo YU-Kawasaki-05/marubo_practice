@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import { AccountStatusBanner } from '../src/features/allowlist/components/AccountStatusBanner'
 import './globals.css'
+import 'katex/dist/katex.min.css'
 
 export const metadata: Metadata = {
   title: 'Marubo AI',

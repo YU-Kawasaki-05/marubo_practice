@@ -56,7 +56,7 @@ export async function POST(req: Request) {
     // streamText関数を使うと、AIの回答を少しずつ（ストリーミング）返せる
     const result = await streamText({
       model: openai('gpt-4o-mini'), // コストが安くて高速なモデルを指定
-      system: 'あなたは親切で分かりやすい塾の先生です。中高生の学習をサポートしてください。数式はLaTeX形式($...$)で書いてください。', // AIへの「役割」指示
+      system: 'あなたは親切で分かりやすい塾の先生です。中高生の学習をサポートしてください。数式は必ずLaTeX形式($...$ または $$...$$)で記述してください。角括弧 [] や [ ] は数式デリミタとして使用しないでください。', // AIへの「役割」指示
       messages, // ModelMessage[]
       // 必要があればここに temperature (創造性) などを設定可能
     })

@@ -8,6 +8,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { useEffect, useState } from 'react'
+import { MessageBubble } from './MessageBubble'
 
 import { getSupabaseBrowserClient } from '@shared/lib/supabaseClient'
 
@@ -34,7 +35,8 @@ function ChatInterfaceInner({ token }: { token: string }) {
     },
   })
 
-  // DEBUG: messages ステートの変化を詳細にログ出力
+  // DEBUG: messages ステートの変化を詳細にログ出力 (必要に応じてコメント解除)
+  /*
   useEffect(() => {
     console.log('ChatInterfaceInner: Messages Updated. Count:', messages.length);
     console.log('Full messages array:', messages);
@@ -49,6 +51,7 @@ function ChatInterfaceInner({ token }: { token: string }) {
       });
     }
   }, [messages]);
+  */
 
   // status から isLoading を判定 ('submitted' または 'streaming' の間はロード中)
   const isLoading = status === 'submitted' || status === 'streaming'
@@ -95,28 +98,7 @@ function ChatInterfaceInner({ token }: { token: string }) {
         )}
         
         {messages.map((m) => (
-          <div
-            key={m.id}
-            className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                m.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {/* ここは後でMarkdown対応コンポーネントに置き換える */}
-              <p className="whitespace-pre-wrap">
-                {m.content}
-                {/* Vercel AI SDK v6対応: contentが空でpartsがある場合のフォールバック */}
-                {!m.content && m.parts && m.parts.map((part, i) => {
-                  if (part.type === 'text') return <span key={i}>{part.text}</span>
-                  return null
-                })}
-              </p>
-            </div>
-          </div>
+          <MessageBubble key={m.id} message={m} />
         ))}
         
         {isLoading && (
