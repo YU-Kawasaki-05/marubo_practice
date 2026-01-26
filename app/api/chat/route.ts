@@ -9,6 +9,7 @@
 
 import { openai } from '@ai-sdk/openai'
 import { streamText, type CoreMessage } from 'ai'
+import { convertSafeMessages } from '@shared/utils/ai-message-converter'
 import { createClient } from '@supabase/supabase-js'
 
 // Next.jsのEdge Runtimeではなく、互換性重視でNode.js Runtimeを使用
@@ -19,6 +20,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export async function POST(req: Request) {
+  if (!process.env.OPENAI_API_KEY) {
+    return new Response('Missing OPENAI_API_KEY environment variable', { status: 500 })
+  }
+
   try {
     // 1. 認証チェック: ログインしているユーザーか確認する
     // クライアントから送られてきた認証トークンを取り出す
@@ -39,24 +44,34 @@ export async function POST(req: Request) {
     }
 
     // 2. ユーザーからのメッセージデータを受け取る
-    // Vercel AI SDKが扱いやすい形式 { messages: [] } で送られてくる想定
-    const { messages }: { messages: CoreMessage[] } = await req.json()
+    // クライアント(useChat)から送られるメッセージは UI Message 形式なので、
+    // 自作の Adapter 関数を使用して、安全に Model Message 形式に変換する。
+    // convertToModelMessages のバグ(undefined parts)を回避する。
+    const requestBody = await req.json()
+    const { messages: uiMessages } = requestBody
+    
+    const messages = await convertSafeMessages(uiMessages)
 
     // 3. AI（OpenAI）に応答を生成させる
     // streamText関数を使うと、AIの回答を少しずつ（ストリーミング）返せる
     const result = await streamText({
       model: openai('gpt-4o-mini'), // コストが安くて高速なモデルを指定
       system: 'あなたは親切で分かりやすい塾の先生です。中高生の学習をサポートしてください。数式はLaTeX形式($...$)で書いてください。', // AIへの「役割」指示
-      messages,
+      messages, // ModelMessage[]
       // 必要があればここに temperature (創造性) などを設定可能
     })
 
     // 4. ストリーミング形式でレスポンスを返す
-    // これにより、フロントエンド側で文字が「カタカタ」と表示される演出ができる
-    return result.toDataStreamResponse()
+    // useChat (Frontend) のデフォルト transport が期待する UI Message Stream を返す
+    return result.toUIMessageStreamResponse()
     
   } catch (err) {
     console.error('Chat API Error:', err)
-    return new Response('Internal Server Error', { status: 500 })
+    // エラーの詳細をクライアントに返してデバッグしやすくする (本番では隠すべき)
+    const errorMessage = err instanceof Error ? err.message : 'Unknown Error'
+    return new Response(JSON.stringify({ error: errorMessage }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    })
   }
 }
