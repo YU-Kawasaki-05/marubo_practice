@@ -61,6 +61,27 @@
 
 ---
 
+## チャット永続化フロー（追加）
+
+```
+[Browser]
+  ├─ POST /api/chat
+  │    ├─ AI 応答をストリーミング返却
+  │    └─ onFinish で Supabase (conversations/messages) に保存
+  ├─ GET /api/conversations         # 一覧（created_at desc, cursor pagination）
+  └─ GET /api/conversations/[id]    # 詳細（messages asc）
+
+[Supabase]
+  ├─ conversations: id, user_id, title, created_at
+  └─ messages: id, conversation_id, role (user|assistant), content, created_at
+     (RLS: user_id = auth.uid(), staff は全件可)
+```
+
+* タイトルは先頭発話30–50文字。無ければ日時を採用。
+* フロントはサイドバーで一覧を表示し、選択した会話を `/api/conversations/[id]` で読み込む。
+
+---
+
 ## アーキテクチャ概要
 
 ```
