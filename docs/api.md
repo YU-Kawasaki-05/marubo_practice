@@ -136,7 +136,7 @@ X-Vercel-AI-Data-Stream: true
 | **Method** | `GET` |
 | **Auth** | Supabase セッション必須 |
 | **役割** | 指定ユーザー（`auth.uid()`）の会話一覧を返す。 |
-| **Query** | `limit` (default 20), `cursor` (created_at, id でページネーション) |
+| **Query** | `limit` (default 20, max 50), `cursor` (created_at と id を連結した文字列でページネーション) |
 
 ### レスポンス例
 ```json
@@ -148,6 +148,7 @@ X-Vercel-AI-Data-Stream: true
   "nextCursor": "2026-01-26T11:40:00Z_conv_122"
 }
 ```
+> 並び順は `created_at desc` 固定。`cursor` は前回レスポンスの `nextCursor` をそのまま渡す。
 
 ## `/api/conversations/[id]` — 会話詳細取得（新規追加）
 
@@ -156,7 +157,7 @@ X-Vercel-AI-Data-Stream: true
 | **Method** | `GET` |
 | **Auth** | Supabase セッション必須 |
 | **役割** | 指定会話IDのメッセージ一覧を返す。 |
-| **Query** | `limit` (default 50), `cursor` (created_at, id) |
+| **Query** | `limit` (default 50, max 200), `cursor` (created_at, id) |
 
 ### レスポンス例
 ```json
@@ -173,6 +174,10 @@ X-Vercel-AI-Data-Stream: true
 ```
 
 > 備考: `/api/chat` は onFinish で `conversations/messages` に保存し、生成した `conversationId` をクライアントへ返す仕様に拡張する（別途実装）。
+
+### タイトル生成ルール
+- 先頭のユーザー発話から先頭 30–50 文字を採用。
+- 話頭が空の場合は `YYYY-MM-DD HH:mm` を採用（例: `2026-01-26 12:00`）。
 
 ## `/api/admin/allowlist` — 許可メール CRUD
 
