@@ -61,9 +61,10 @@
 | **QA-01** | done | RLS/Allowed Email テスト | **Step 1**: (完了) `scripts/verify-rls.ts` を作成。<br>**Step 2**: 匿名/未許可ユーザーで0件、許可ユーザーで1件のみ閲覧できることを検証済み。 |
 | **QA-02** | done | API 統合テスト | **Step 1**: `/api/admin/allowlist` に対し、正常なデータを送って 200 OK が返るかテストする。<br>**Step 2**: 不正なデータ（メールアドレス形式違反など）を送って 400 Bad Request が返るかテストする。（`tests/api/admin/allowlist.test.ts` で実装済み） |
 | **QA-03** | todo | フロント E2E | (Playwright等の導入が必要なため、後回しでも可) 手動で「スタッフで追加 → 生徒でログイン」の流れを確認する手順書を作るだけでもOK。 |
-| **QA-04** | todo | スクリプトテスト | `scripts/seed-allowlist.ts` を `--dry-run` (書き込まないモード) で実行し、エラーが出ないか確認する。 |
-| **QA-05** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
-| **QA-06** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
+| **QA-04** | todo | チャット永続化の回帰テスト | 保存→取得が成功するかを1ケースで確認する（`conversations`/`messages` のRLS込み）。 |
+| **QA-05** | todo | スクリプトテスト | `scripts/seed-allowlist.ts` を `--dry-run` (書き込まないモード) で実行し、エラーが出ないか確認する。 |
+| **QA-06** | review | `/api/admin/allowlist` API テスト | (QA-02に統合) |
+| **QA-07** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
 
 // ...existing code...
 ### 5. 運用 / DevOps (OPS)
@@ -84,8 +85,8 @@
 | **CHAT-01** | done | 技術選定 & セットアップ | **Step 1**: (完了) Vercel AI SDK (`ai`), `openai` SDK をインストール済み。<br>**Step 2**: (完了) 環境変数 (`OPENAI_API_KEY`) を `.env.local` に設定済み。 |
 | **CHAT-02** | done | バックエンド API 実装 | **Step 1**: (完了) `/app/api/chat/route.ts` を作成済み。<br>**Step 2**: (完了) `streamText` を用いてOpenAIへのストリーミングリクエストを実装済み。<br>**Step 3**: (完了) システムプロンプトを設定済み。 |
 | **CHAT-03** | done | チャット UI 実装 | **Step 1**: (完了) `src/features/chat/components/ChatInterface.tsx` を作成し、`useChat` でメッセージ送受信を行えるようにする。<br>**Step 1.5 (Fix done)**: (完了) Supabase認証トークンを `useChat` に正しく渡すため、コンポーネントを分割してトークン取得後に初期化するように修正済み。<br>**Step 1.6 (Fix done)**: (完了) `toDataStreamResponse` のプロトコル不一致を修正済み。<br>**Step 1.7 (Fix done)**: (完了) Data Stream Protocol使用時、`message.content`が空になる問題を修正 (`MessageBubble`で`parts`からテキスト復元)。<br>**Step 2 (UI)**: (完了) メッセージ表示コンポーネント作成 (`MessageBubble`)。<br>**Step 3 (Markdown)**: (完了) `react-markdown` を導入し、太字やリストを表示できるようにする。<br>**Step 4 (Math)**: (完了) `remark-math`, `rehype-katex` を導入し、数式 ($...$) をきれいに表示できるようにする。<br>**Step 5 (Style)**: (完了) `MemoizedMarkdown` で AIの応答エリアに適切なスタイル（背景色、余白）を適用済み。 |
-| **CHAT-04** | todo | 画面統合 | **Step 1**: `/app/chat/page.tsx` (またはトップページ) に ChatInterface を配置する。<br>**Step 2**: ログインしていないユーザーや、Allowlist無効ユーザーには使わせないガード処理を入れる。 |
-| **CHAT-05** | todo | DB保存 (オプション) | **Step 1**: 会話履歴をSupabaseに保存するテーブル設計を行う(今回は必須ではないが将来的に必要)。 |
+| **CHAT-04** | progress | 画面統合 | **Step 1**: `/app/chat/page.tsx` を AllowlistGuard 付きで配置する。<br>**Step 2**: チャット画面で自動スクロール（新メッセージ受信時に最下部へ）。 |
+| **CHAT-05** | todo | チャット永続化 & 履歴UI | **Step 1**: Supabase スキーマ追加（`conversations`, `messages`）と RLS ポリシー作成。<br>**Step 2**: API 追加 — `/api/conversations` (一覧), `/api/conversations/[id]` (詳細) を新設。<br>**Step 3**: `/api/chat` の onFinish で保存処理を実装。<br>**Step 4**: サイドバーで会話一覧を表示し、クリックでメッセージを再読み込み（タイトルは先頭発話30–50文字 or 日付で自動生成）。<br>**Step 5**: 保存→取得の統合テストを1件追加。 |
 
 ---
 
