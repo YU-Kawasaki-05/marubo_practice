@@ -129,6 +129,51 @@ X-Vercel-AI-Data-Stream: true
 
 ---
 
+## `/api/conversations` — 会話一覧取得（新規追加）
+
+| | 内容 |
+|---|---|
+| **Method** | `GET` |
+| **Auth** | Supabase セッション必須 |
+| **役割** | 指定ユーザー（`auth.uid()`）の会話一覧を返す。 |
+| **Query** | `limit` (default 20), `cursor` (created_at, id でページネーション) |
+
+### レスポンス例
+```json
+{
+  "data": [
+    { "id": "conv_123", "title": "二次方程式の解の公式を教えて", "createdAt": "2026-01-26T12:00:00Z" },
+    { "id": "conv_122", "title": "2026-01-26 11:40", "createdAt": "2026-01-26T11:40:00Z" }
+  ],
+  "nextCursor": "2026-01-26T11:40:00Z_conv_122"
+}
+```
+
+## `/api/conversations/[id]` — 会話詳細取得（新規追加）
+
+| | 内容 |
+|---|---|
+| **Method** | `GET` |
+| **Auth** | Supabase セッション必須 |
+| **役割** | 指定会話IDのメッセージ一覧を返す。 |
+| **Query** | `limit` (default 50), `cursor` (created_at, id) |
+
+### レスポンス例
+```json
+{
+  "data": {
+    "id": "conv_123",
+    "title": "二次方程式の解の公式を教えて",
+    "messages": [
+      { "id": "m1", "role": "user", "content": "二次方程式の解の公式を教えて", "createdAt": "2026-01-26T12:00:05Z" },
+      { "id": "m2", "role": "assistant", "content": "解の公式は...", "createdAt": "2026-01-26T12:00:06Z" }
+    ]
+  }
+}
+```
+
+> 備考: `/api/chat` は onFinish で `conversations/messages` に保存し、生成した `conversationId` をクライアントへ返す仕様に拡張する（別途実装）。
+
 ## `/api/admin/allowlist` — 許可メール CRUD
 
 | | 内容 |

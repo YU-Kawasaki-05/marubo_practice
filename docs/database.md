@@ -13,6 +13,33 @@
 
 ---
 
+## チャット履歴テーブル（新規追加案）
+
+### `conversations`
+- `id` (uuid, pk)
+- `user_id` (uuid, not null) — 会話の所有者
+- `title` (text, not null)
+- `created_at` (timestamptz, default now)
+
+### `messages`
+- `id` (uuid, pk)
+- `conversation_id` (uuid, fk -> conversations.id, not null)
+- `role` (text, check in ('user','assistant'), not null)
+- `content` (text, not null) — プレーンテキスト（UI側は Markdown/KaTeX 表示）
+- `created_at` (timestamptz, default now)
+
+### インデックス
+- `conversations(user_id, created_at desc)`
+- `messages(conversation_id, created_at asc)`
+
+### RLS ポリシー（Supabase）
+- `conversations`: `user_id = auth.uid()` で SELECT/INSERT/UPDATE/DELETE 許可。staff ロールは全件許可。
+- `messages`: 親 `conversation_id` の `user_id` が `auth.uid()` のとき SELECT/INSERT 許可。staff ロールは全件許可。
+
+### 備考
+- タイトル自動生成: 先頭発話30–50文字、なければ `YYYY-MM-DD HH:mm` で補完。
+- AI応答保存は `/api/chat` の `onFinish` で実行し、`conversation_id` をレスポンスに含める。
+
 ## データ削除ポリシー
 
 原則として、**物理削除（DELETE）は行わず、ステータス変更による論理削除**を採用する。
