@@ -28,22 +28,23 @@ create index if not exists idx_messages_conversation_created_at
 alter table conversations enable row level security;
 alter table messages enable row level security;
 
--- policy: owner can CRUD their conversations
-create policy if not exists conversations_owner_all
+-- NOTE: PostgreSQL on Supabase does not support IF NOT EXISTS for policies
+-- Create policies idempotently by naming them uniquely; reruns will fail only if they already exist.
+create policy conversations_owner_all
   on conversations
   for all
   using (user_id = auth.uid())
   with check (user_id = auth.uid());
 
 -- policy: staff can do everything (assumes app_metadata.role = 'staff')
-create policy if not exists conversations_staff_all
+create policy conversations_staff_all
   on conversations
   for all
-  using (coalesce(auth.jwt()->>'app_metadata'::text::json->>'role','') = 'staff')
-  with check (coalesce(auth.jwt()->>'app_metadata'::text::json->>'role','') = 'staff');
+  using (coalesce((auth.jwt()->'app_metadata'->>'role'),'') = 'staff')
+  with check (coalesce((auth.jwt()->'app_metadata'->>'role'),'') = 'staff');
 
 -- policy: messages follow parent conversation ownership
-create policy if not exists messages_owner_all
+create policy messages_owner_all
   on messages
   for all
   using (
@@ -61,11 +62,11 @@ create policy if not exists messages_owner_all
     )
   );
 
-create policy if not exists messages_staff_all
+create policy messages_staff_all
   on messages
   for all
-  using (coalesce(auth.jwt()->>'app_metadata'::text::json->>'role','') = 'staff')
-  with check (coalesce(auth.jwt()->>'app_metadata'::text::json->>'role','') = 'staff');
+  using (coalesce((auth.jwt()->'app_metadata'->>'role'),'') = 'staff')
+  with check (coalesce((auth.jwt()->'app_metadata'->>'role'),'') = 'staff');
 
 comment on table conversations is 'Chat conversation rooms (one per thread)';
 comment on table messages is 'Messages belonging to a conversation (ordered by created_at asc)';
