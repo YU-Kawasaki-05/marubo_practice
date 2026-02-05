@@ -11,6 +11,8 @@ import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 import { convertSafeMessages } from '@shared/utils/ai-message-converter'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabaseAdminClient } from '@shared/lib/supabaseAdmin'
+import type { Database } from '@shared/types/database'
 
 // Next.jsのEdge Runtimeではなく、互換性重視でNode.js Runtimeを使用
 export const runtime = 'nodejs'
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
     }
 
     // Supabaseを使ってトークンが本物か検証する
-    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
     const {
       data: { user },
       error,
@@ -52,6 +54,33 @@ export async function POST(req: Request) {
     
     const messages = await convertSafeMessages(uiMessages)
 
+    const supabaseAdmin = getSupabaseAdminClient()
+    const conversationId = crypto.randomUUID()
+
+    const lastUserMessage = [...uiMessages]
+      .reverse()
+      .find((m: any) => m.role === 'user')
+
+    const userText =
+      (lastUserMessage?.content as string | undefined) ??
+      (lastUserMessage?.parts
+        ?.filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join('')) ??
+      ''
+
+    const makeTitle = () => {
+      if (userText && userText.trim().length > 0) {
+        return userText.trim().slice(0, 50)
+      }
+      const d = new Date()
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate(),
+      ).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(
+        d.getMinutes(),
+      ).padStart(2, '0')}`
+    }
+
     // 3. AI（OpenAI）に応答を生成させる
     // streamText関数を使うと、AIの回答を少しずつ（ストリーミング）返せる
     const result = await streamText({
@@ -59,11 +88,53 @@ export async function POST(req: Request) {
       system: 'あなたは親切で分かりやすい塾の先生です。中高生の学習をサポートしてください。数式は必ずLaTeX形式($...$ または $$...$$)で記述してください。角括弧 [] や [ ] は数式デリミタとして使用しないでください。', // AIへの「役割」指示
       messages, // ModelMessage[]
       // 必要があればここに temperature (創造性) などを設定可能
+      onFinish: async (event) => {
+        try {
+          const assistantText =
+            (event.text as string | undefined) ??
+            (event.responseMessages
+              ?.flatMap((m: any) =>
+                m.parts?.filter((p: any) => p.type === 'text').map((p: any) => p.text) ?? [],
+              )
+              .join('')) ??
+            ''
+
+          // conversations を作成
+          await supabaseAdmin.from('conversations').insert({
+            id: conversationId,
+            user_id: user.id,
+            title: makeTitle(),
+          })
+
+          // 最新のユーザーメッセージ + AI 応答を保存
+          const rows = []
+          if (userText) {
+            rows.push({
+              id: crypto.randomUUID(),
+              conversation_id: conversationId,
+              role: 'user',
+              content: userText,
+            })
+          }
+          rows.push({
+            id: crypto.randomUUID(),
+            conversation_id: conversationId,
+            role: 'assistant',
+            content: assistantText,
+          })
+          await supabaseAdmin.from('messages').insert(rows)
+        } catch (saveError) {
+          console.error('Chat save error:', saveError)
+          // 保存失敗はレスポンスには影響させない（ログのみ）
+        }
+      },
     })
 
-    // 4. ストリーミング形式でレスポンスを返す
-    // useChat (Frontend) のデフォルト transport が期待する UI Message Stream を返す
-    return result.toUIMessageStreamResponse()
+    // 4. ストリーミング形式でレスポンスを返す（conversationId をヘッダで返す）
+    const response = result.toUIMessageStreamResponse()
+    const headers = new Headers(response.headers)
+    headers.set('x-conversation-id', conversationId)
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
     
   } catch (err) {
     console.error('Chat API Error:', err)

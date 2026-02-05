@@ -106,6 +106,58 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          created_at?: string
+        }
+        Update: Partial<{
+          id: string
+          user_id: string
+          title: string
+          created_at: string
+        }>
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          role: 'user' | 'assistant'
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          role: 'user' | 'assistant'
+          content: string
+          created_at?: string
+        }
+        Update: Partial<{
+          id: string
+          conversation_id: string
+          role: 'user' | 'assistant'
+          content: string
+          created_at: string
+        }>
+        Relationships: [
+          {
+            foreignKeyName: 'messages_conversation_id_fkey'
+            columns: ['conversation_id']
+            referencedRelation: 'conversations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
