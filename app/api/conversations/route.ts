@@ -22,10 +22,16 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
     const token = authHeader.startsWith('Bearer ')
       ? authHeader.slice(7)
       : authHeader
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    })
 
     // 認証確認
     try {

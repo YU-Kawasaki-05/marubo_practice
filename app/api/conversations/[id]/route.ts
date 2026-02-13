@@ -21,8 +21,16 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
-    const token = authHeader.replace('Bearer ', '')
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : authHeader
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    })
 
     const { data: userData, error: userError } = await supabase.auth.getUser(token)
     if (userError || !userData.user) {
