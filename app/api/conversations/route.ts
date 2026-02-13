@@ -14,15 +14,39 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export async function GET(req: Request) {
   try {
     const authHeader = req.headers.get('Authorization')
+    // DEBUG: 認証情報の受け取り確認（必要がなくなったら削除してください）
+    console.log('authorization head:', authHeader?.slice(0, 20))
+    console.log('cookie:', req.headers.get('cookie'))
+
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
-    const token = authHeader.replace('Bearer ', '')
+    const token = authHeader.startsWith('Bearer ')
+      ? authHeader.slice(7)
+      : authHeader
 
     // 認証確認
+    try {
+      const payload = JSON.parse(
+        Buffer.from(token.split('.')[1] ?? '', 'base64').toString('utf8'),
+      )
+      console.log(
+        'jwt iss/aud/exp:',
+        payload?.iss,
+        payload?.aud,
+        payload?.exp,
+        'expires in:',
+        payload?.exp ? payload.exp - Math.floor(Date.now() / 1000) : null,
+      )
+    } catch (e) {
+      console.log('jwt decode failed')
+    }
+
     const { data: userData, error: userError } = await supabase.auth.getUser(token)
+    console.log('getUser error:', userError, 'user:', userData?.user?.id)
+
     if (userError || !userData.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -50,6 +74,7 @@ export async function GET(req: Request) {
     }
 
     const { data, error } = await query
+    console.log('rows length:', data?.length ?? 0, 'query error:', error)
     if (error) {
       console.error('Fetch conversations error:', error)
       return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })
