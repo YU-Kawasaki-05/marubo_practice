@@ -6,34 +6,51 @@
 
 'use client'
 
+import { type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
 import { useEffect, useState } from 'react'
 import { MessageBubble } from './MessageBubble'
 
 import { getSupabaseBrowserClient } from '@shared/lib/supabaseClient'
 
-/**
- * 内部コンポーネント: トークンが確定してからマウントされる
- * useChat はここで初めて初期化されるため、確実に token が headers に入る
- */
-function ChatInterfaceInner({ token }: { token: string }) {
-  // デバッグ: トークンが正しく渡されているか確認
-  useEffect(() => {
-    console.log('ChatInterfaceInner: Token available:', !!token, token?.slice(0, 10))
-  }, [token])
+export interface ChatInterfaceProps {
+  token?: string | null
+  conversationId?: string | null
+  onConversationCreated?: (id: string) => void
+}
 
+/**
+ * チャットセッション（1つの会話）を管理するコンポーネント
+ * useChat フックを内包し、特定の conversationId (または新規) に対するやり取りを行う
+ */
+function ChatSession({ 
+  token, 
+  initialMessages = [], 
+  conversationId,
+  onConversationCreated
+}: { 
+  token: string // 必須
+  initialMessages?: UIMessage[]
+  conversationId?: string | null
+  onConversationCreated?: (id: string) => void
+}) {
   // Vercel AI SDK の useChat (v6系) は input 管理を提供しないため、自前で管理する
   const [input, setInput] = useState('')
   
-  const { messages, sendMessage, status } = useChat({
-    // api: '/api/chat', // デフォルトが '/api/chat' なので省略可 (型エラー回避)
-    // プロトコルをData Stream (デフォルト) に戻す
-    // headers: { 'Authorization': `Bearer ${token}` }, // useChat初期化オプションにはheadersがないため削除
+  const { messages, sendMessage, status, setMessages } = useChat({
+    // api: '/api/chat', // デフォルト
     onError: (error) => {
       console.error('Chat API Error:', error)
       alert('エラーが発生しました: ' + error.message)
     },
   })
+
+  // 初期メッセージの設定
+  useEffect(() => {
+    if (initialMessages.length > 0) {
+      setMessages(initialMessages)
+    }
+  }, []) // マウント時のみ実行（親で key を制御しているため）
 
   // DEBUG: messages ステートの変化を詳細にログ出力 (必要に応じてコメント解除)
   /*
@@ -71,19 +88,39 @@ function ChatInterfaceInner({ token }: { token: string }) {
     
     try {
       // sendMessage を使ってメッセージを追加・送信
-      // v6.0.33 の型定義に従い { role, content } ではなく { text } を渡す (または CreateUIMessage)
-      // headers はここで渡す必要がある
+      // headers はここで渡す（認証トークンを API に送る）
       await sendMessage({
         text: userMessage,
       }, {
-        // 明示的にヘッダーを渡す
         headers: {
           'Authorization': `Bearer ${token}`
-        }
+        },
       })
-    } catch (e) {
-      console.error(e)
-      // エラー時は入力を戻すなどの処理が必要だが、今回は簡易実装
+
+      // sendMessage 完了後、最新の会話一覧を取得して
+      // 新しく作成された会話のIDを親に通知する
+      // （API は x-conversation-id ヘッダーで返すが、useChat 経由では取得できないため、
+      //   会話一覧APIから最新の会話IDを取得する）
+      if (!conversationId && onConversationCreated) {
+        try {
+          const res = await globalThis.fetch('/api/conversations?limit=1', {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          if (res.ok) {
+            const json = await res.json()
+            // API レスポンス形式: { data: [...], nextCursor }
+            const firstConv = json.data?.[0]
+            if (firstConv?.id) {
+              onConversationCreated(firstConv.id)
+            }
+          }
+        } catch {
+          // 会話ID取得の失敗はチャット自体には影響させない
+          console.warn('Could not fetch latest conversation id')
+        }
+      }
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -149,20 +186,99 @@ function ChatInterfaceInner({ token }: { token: string }) {
 }
 
 /**
+ * データのロードを管理するコンポーネント
+ */
+function ChatLoader({ 
+  token, 
+  conversationId, 
+  onConversationCreated 
+}: { 
+  token: string
+  conversationId?: string | null
+  onConversationCreated?: (id: string) => void 
+}) {
+  const [messages, setMessages] = useState<UIMessage[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([])
+      return
+    }
+
+    setLoading(true)
+    fetch(`/api/conversations/${conversationId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.ok ? res.json() : Promise.reject(res.statusText))
+      .then(json => {
+        // API レスポンス形式: { data: { id, title, createdAt, messages: [{id, role, content, createdAt}] } }
+        const rawMessages: Array<{ id: string; role: string; content: string; createdAt: string }> =
+          json?.data?.messages ?? []
+
+        // DB のメッセージ形式を UIMessage 形式に変換
+        // UIMessage は { id, role, content, parts: [{type:'text', text}], createdAt } を必要とする
+        const uiMessages: UIMessage[] = rawMessages.map((m) => ({
+          id: m.id,
+          role: m.role as 'user' | 'assistant',
+          content: m.content ?? '',
+          parts: [{ type: 'text' as const, text: m.content ?? '' }],
+          createdAt: new Date(m.createdAt),
+        }))
+
+        setMessages(uiMessages)
+      })
+      .catch(err => {
+        console.error('Failed to load conversation', err)
+      })
+      .finally(() => setLoading(false))
+  }, [conversationId, token])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-full text-gray-400">
+        読み込み中...
+      </div>
+    )
+  }
+
+  return (
+    <ChatSession 
+      key={conversationId || 'new'} 
+      token={token} 
+      initialMessages={messages} 
+      conversationId={conversationId}
+      onConversationCreated={onConversationCreated}
+    />
+  )
+}
+
+/**
  * メインコンポーネント: 認証状態を管理するためのラッパー
  */
-export function ChatInterface() {
-  const [token, setToken] = useState<string | null>(null)
-  const [isAuthChecking, setIsAuthChecking] = useState(true)
+export function ChatInterface({ 
+  token: externalToken, 
+  conversationId, 
+  onConversationCreated 
+}: ChatInterfaceProps) {
+  const [internalToken, setInternalToken] = useState<string | null>(null)
+  const [isAuthChecking, setIsAuthChecking] = useState(!externalToken)
+
+  const activeToken = externalToken || internalToken
 
   // マウント時にセッシュントークンを取得し、変更を監視する
   useEffect(() => {
+    if (externalToken) {
+      setIsAuthChecking(false)
+      return
+    }
+
     const supabase = getSupabaseBrowserClient()
     
     // 初期化: 現在のセッションを取得
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        setToken(session.access_token)
+        setInternalToken(session.access_token)
       }
       setIsAuthChecking(false)
     })
@@ -170,16 +286,16 @@ export function ChatInterface() {
     // 監視: 認証状態（トークンリフレッシュ等）の変化をリッスン
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
-        setToken(session.access_token)
+        setInternalToken(session.access_token)
       } else {
-        setToken(null)
+        setInternalToken(null)
       }
     })
 
     return () => {
       subscription.unsubscribe()
     }
-  }, [])
+  }, [externalToken])
 
   // まだ認証情報の取得が終わっていない場合
   if (isAuthChecking) {
@@ -187,10 +303,16 @@ export function ChatInterface() {
   }
 
   // ログインしていない場合（トークンがない場合）
-  if (!token) {
+  if (!activeToken) {
     return <div className="p-4 text-center text-red-500 font-bold">チャットを利用するにはログインが必要です。</div>
   }
 
-  // トークンがある場合のみ Inner コンポーネントをマウント
-  return <ChatInterfaceInner token={token} />
+  // トークンがある場合のみ Loader コンポーネントをマウント
+  return (
+    <ChatLoader 
+      token={activeToken} 
+      conversationId={conversationId} 
+      onConversationCreated={onConversationCreated}
+    />
+  )
 }

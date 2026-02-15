@@ -92,11 +92,11 @@ export async function POST(req: Request) {
         try {
           const assistantText =
             (event.text as string | undefined) ??
-            (event.responseMessages
-              ?.flatMap((m: any) =>
-                m.parts?.filter((p: any) => p.type === 'text').map((p: any) => p.text) ?? [],
+            ((event as Record<string, unknown>).responseMessages as Array<{ parts?: Array<{ type: string; text?: string }> }> | undefined)
+              ?.flatMap((m) =>
+                m.parts?.filter((p) => p.type === 'text').map((p) => p.text ?? '') ?? [],
               )
-              .join('')) ??
+              .join('') ??
             ''
 
           // conversations を作成
@@ -107,19 +107,19 @@ export async function POST(req: Request) {
           })
 
           // 最新のユーザーメッセージ + AI 応答を保存
-          const rows = []
+          const rows: { id: string; conversation_id: string; role: 'user' | 'assistant'; content: string }[] = []
           if (userText) {
             rows.push({
               id: crypto.randomUUID(),
               conversation_id: conversationId,
-              role: 'user',
+              role: 'user' as const,
               content: userText,
             })
           }
           rows.push({
             id: crypto.randomUUID(),
             conversation_id: conversationId,
-            role: 'assistant',
+            role: 'assistant' as const,
             content: assistantText,
           })
           await supabaseAdmin.from('messages').insert(rows)
