@@ -11,10 +11,15 @@ import type {
 
 type TableName = keyof Database['public']['Tables']
 
+type ConversationRow = Database['public']['Tables']['conversations']['Row']
+type MessageRow = Database['public']['Tables']['messages']['Row']
+
 type TableMap = {
   allowed_email: AllowedEmailRow[]
   audit_allowlist: AuditAllowlistRow[]
   app_user: AppUserRow[]
+  conversations: ConversationRow[]
+  messages: MessageRow[]
 }
 
 type FilterFn<T> = (row: T) => boolean
@@ -205,6 +210,8 @@ class MockSupabaseAdminClient {
         created_at: new Date().toISOString(),
       },
     ],
+    conversations: [],
+    messages: [],
   }
 
   auth = {

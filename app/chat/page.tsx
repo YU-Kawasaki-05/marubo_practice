@@ -1,13 +1,49 @@
+'use client'
+
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
-import { AllowlistGuard } from '../../src/features/allowlist/components/AllowlistGuard'
-import { ChatInterface } from '../../src/features/chat/components/ChatInterface'
-
-export const metadata = {
-  title: 'AIチャット - Marubo AI',
-}
+import { AllowlistGuard } from '@features/allowlist/components/AllowlistGuard'
+import { ChatInterface } from '@features/chat/components/ChatInterface'
+import { ConversationSidebar } from '@features/chat/components/ConversationSidebar'
+import { getSupabaseBrowserClient } from '@shared/lib/supabaseClient'
 
 export default function ChatPage() {
+  const [selectedId, setSelectedId] = useState<string>('')
+  const [token, setToken] = useState<string | null>(null)
+  
+  // サイドバーを強制的に再レンダリングするためのキー（新規会話作成時などに更新）
+  const [sidebarKey, setSidebarKey] = useState(0)
+
+  // 認証トークンの取得と監視
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient()
+    
+    // 初期化
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setToken(session.access_token)
+    })
+    
+    // 変更監視
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (session) setToken(session.access_token)
+      else setToken(null)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // 新規チャットが作成されたときのコールバック（サイドバー更新 + ID選択）
+  const handleConversationCreated = (id: string) => {
+    setSelectedId(id)
+    setSidebarKey(prev => prev + 1)
+  }
+
+  // サイドバーで会話が選択されたとき
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+  }
+
   return (
     <AllowlistGuard redirectToHome={false}>
       {/* 
@@ -30,9 +66,26 @@ export default function ChatPage() {
           </Link>
         </header>
 
-        <main className="flex-1 overflow-hidden relative">
-          <ChatInterface />
-        </main>
+        <div className="flex flex-1 overflow-hidden">
+          {token && (
+            <aside className="hidden md:flex w-64 flex-col border-r bg-gray-50 overflow-hidden">
+              <ConversationSidebar
+                key={sidebarKey}
+                token={token}
+                selectedId={selectedId}
+                onSelect={handleSelect}
+              />
+            </aside>
+          )}
+
+          <main className="flex-1 overflow-hidden relative flex flex-col">
+            <ChatInterface 
+              token={token} 
+              conversationId={selectedId || null}
+              onConversationCreated={handleConversationCreated}
+            />
+          </main>
+        </div>
       </div>
     </AllowlistGuard>
   )
