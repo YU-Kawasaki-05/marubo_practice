@@ -26,11 +26,11 @@
 | **SPEC-04** | review | 退会/削除ポリシー整理 | (完了済み) `docs/database.md` に論理削除方針を、`docs/operational/runbook.md` に退会処理手順を追記済み。 |
 | **SPEC-05** | done | 保護者共有要件確認 | (完了) **方針決定**: 個人情報保護のため、CSVの保護者への配布・共有は行わない。<br>※ 必要な場合はスタッフが個別に連絡する運用とする。 |
 | **SPEC-06** | done | Onboarding/README 更新 | (完了) `docs/onboarding.md` 作成済み。`README.md` にセットアップ手順統合済み。 |
-| **SPEC-07** | todo | 完成基準（受け入れ条件）の明文化 | **Step 1**: `docs/situation/001_20260215.md` のユーザーストーリーを参照し、**生徒/スタッフ**それぞれの必須フローを洗い出す。<br>**Step 2**: `docs/acceptance.md` を新規作成し、「完了=この操作がすべて通る」をチェックリスト化する。<br>**Step 3**: `docs/todo.md` の該当タスクに受け入れ条件へのリンクを追記する。 |
-| **SPEC-08** | todo | 画像添付（Storage）仕様確定 | **Step 1**: 画像の**形式/最大サイズ/枚数**、圧縮方針を決める。<br>**Step 2**: Storage のパス設計（例: `attachments/{userId}/{messageId}/{uuid}`）と公開範囲を決める。<br>**Step 3**: `docs/attachments.md` に仕様を整理する。 |
-| **SPEC-09** | todo | スタッフ会話検索・閲覧仕様 | **Step 1**: 検索条件（生徒メール/期間/キーワード/ステータス）を決める。<br>**Step 2**: 一覧・詳細の表示項目（タイトル/作成日/メッセージ）を確定する。<br>**Step 3**: `docs/admin/conversations.md` を作成しUI/権限ルールを明記する。 |
-| **SPEC-10** | todo | 月次レポート仕様 | **Step 1**: 収集指標（利用者数/質問数/トピック/返信時間など）を決める。<br>**Step 2**: 出力形式（CSV/HTML）とテンプレートを決める。<br>**Step 3**: 送信先/スケジュールを定義し `docs/reports/monthly.md` にまとめる。 |
-| **SPEC-11** | todo | 監視/通知・レート制限方針 | **Step 1**: 通知チャネル（Resend/Sentry/Slack 等）を決定する。<br>**Step 2**: レート制限ルール（回数/時間窓/エラーメッセージ）を定義する。<br>**Step 3**: `docs/operational/monitoring.md` に記載する。 |
+| **SPEC-07** | done | 完成基準（受け入れ条件）の明文化 | (完了) `docs/acceptance.md` を新規作成。生徒フロー（S-01〜S-11）・スタッフフロー（T-01〜T-09）・非機能要件（N-01〜N-11）のチェックリストを定義。β版スコープ外の項目も明記。 |
+| **SPEC-08** | done | 画像添付（Storage）仕様確定 | (完了) `docs/attachments.md` を新規作成。**決定事項**: 形式=JPEG/PNG/WebP、最大5MB/枚、最大3枚/メッセージ、長辺1280pxまで圧縮(JPEG品質0.8)、Storage保存1年。アップロードフロー・エラーハンドリング・UI仕様も定義。 |
+| **SPEC-09** | done | スタッフ会話検索・閲覧仕様 | (完了) `docs/admin/conversations.md` を新規作成。**決定事項**: 検索条件=生徒メール(部分一致)/期間/キーワード(タイトル部分一致)、AND絞り込み。一覧=メール・タイトル・作成日・メッセージ数(20件/ページ、オフセットページネーション)。詳細=全メッセージ+添付画像+タイムスタンプ、閲覧専用。API仕様も定義。 |
+| **SPEC-10** | done | 月次レポート仕様 | (完了) `docs/reports/monthly.md` を新規作成。**決定事項**: 指標=アクティブ生徒数/総会話数/総質問数/総回答数/1人あたり平均/最活発日。形式=HTMLメール本文+CSV添付(生徒別詳細)。送信=`ADMIN_EMAILS`全員、毎日23:55 JSTのCronで月末判定→即時集計&送信。dry-run/手動リトライ対応。集計SQL・メールテンプレート・API仕様も定義。 |
+| **SPEC-11** | done | 監視/通知・レート制限方針 | (完了) `docs/operational/monitoring.md` を新規作成。**決定事項**: β版はResendメール+Vercel/Supabaseログで運用(Sentry任意)。S1=即時メール(LLM全経路失敗/DB障害/レポート失敗/認証障害)、S2=ログ+翌日確認、S3=ログのみ。5分デバウンス付き。レート制限: 月間100問/ユーザー(`MONTHLY_QUOTA`)、10リクエスト/分/ユーザー。超過時429+UIメッセージ。 |
 
 ### 2. バックエンド実装 (BE)
 
@@ -99,8 +99,8 @@
 | **OPS-03** | blocked | Allowlist 変更通知設計 | (ユーザー確認待ち) |
 | **OPS-04** | review | README 統合反映 | (完了確認) `README.new.md` が削除され、`README.md` に統合されているか確認する。 |
 | **OPS-05** | todo | Resend セットアップ | **Step 1**: 送信ドメイン/送信元アドレスを確定。<br>**Step 2**: `RESEND_API_KEY` を本番/開発に設定。<br>**Step 3**: `docs/deployment.md` に手順を追記。 |
-| **OPS-06** | todo | Vercel Cron 設定 | **Step 1**: 月次レポートの Cron を設定（JST/月末）。<br>**Step 2**: dry-run と本送信の切替方針を文書化。 |
-| **OPS-07** | todo | 監視・通知導入 | **Step 1**: Sentry/Resend/Slack のどれを採用するか決定。<br>**Step 2**: 本番環境の通知先と運用手順を `docs/operational/monitoring.md` に記載。 |
+| **OPS-06** | todo | Vercel Cron 設定 | **Step 1**: `vercel.json` に Cron 設定を追加（`55 23 * * *` / `Asia/Tokyo`）。<br>**Step 2**: dry-run はクエリパラメータ `?dryRun=true` で切替。通常 Cron は本送信。手動リトライ時に dry-run 選択可。仕様は `docs/reports/monthly.md` に記載済み。 |
+| **OPS-07** | todo | 監視・通知導入 | **方針確定済み**: β版は Resend メール + Vercel/Supabase ログ。Sentry は任意（将来推奨）。仕様は `docs/operational/monitoring.md` に記載済み。<br>**Step 1**: `src/shared/lib/notifier.ts` を実装（BE-16 と連動）。<br>**Step 2**: `ADMIN_EMAILS` / `MAIL_FROM` を本番環境に設定。 |
 | **OPS-08** | todo | 本番環境の秘密情報管理 | **Step 1**: `.env.example` に不足分を追記。<br>**Step 2**: `docs/deployment.md` に必須env一覧を整理。 |
 
 ### 6. チャット機能実装 (CHAT)
@@ -114,7 +114,7 @@
 | **CHAT-03** | done | チャット UI 実装 | **Step 1**: (完了) `src/features/chat/components/ChatInterface.tsx` を作成し、`useChat` でメッセージ送受信を行えるようにする。<br>**Step 1.5 (Fix done)**: (完了) Supabase認証トークンを `useChat` に正しく渡すため、コンポーネントを分割してトークン取得後に初期化するように修正済み。<br>**Step 1.6 (Fix done)**: (完了) `toDataStreamResponse` のプロトコル不一致を修正済み。<br>**Step 1.7 (Fix done)**: (完了) Data Stream Protocol使用時、`message.content`が空になる問題を修正 (`MessageBubble`で`parts`からテキスト復元)。<br>**Step 2 (UI)**: (完了) メッセージ表示コンポーネント作成 (`MessageBubble`)。<br>**Step 3 (Markdown)**: (完了) `react-markdown` を導入し、太字やリストを表示できるようにする。<br>**Step 4 (Math)**: (完了) `remark-math`, `rehype-katex` を導入し、数式 ($...$) をきれいに表示できるようにする。<br>**Step 5 (Style)**: (完了) `MemoizedMarkdown` で AIの応答エリアに適切なスタイル（背景色、余白）を適用済み。 |
 | **CHAT-04** | progress | 画面統合 | **Step 1 (done)**: `/app/chat/page.tsx` を AllowlistGuard 付きで配置する。<br>**Step 2 (todo)**: チャット画面で自動スクロール（新メッセージ受信時に最下部へ）。 |
 | **CHAT-05** | progress | チャット永続化 & 履歴UI | **Blocker解消**: DB パスワード受領済み。<br>**Step 1 (done)**: Supabase スキーマ適用を確認（`db push` 済み）。<br>**Step 2 (done)**: `/api/chat` に onFinish 保存処理を追加し、`conversationId` をヘッダで返す。<br>**Step 3 (done)**: `/api/conversations` (GET 一覧) を実装（limit/cursor、`created_at desc`）。<br>**Step 4 (done)**: `/api/conversations/[id]` (GET 詳細) を実装（messages 昇順）。<br>**Step 5 (done)**: フロント サイドバー最小版を実装（一覧取得→クリックで詳細表示、最新会話で選択更新）。<br>&nbsp;&nbsp;**Step 5-1 (done)**: `ConversationSidebar.tsx` 新規作成（一覧fetch、表示、もっと読む、ハイライト）。<br>&nbsp;&nbsp;**Step 5-2 (done)**: `ChatInterface.tsx` を3層構成に改修（`ChatSession` / `ChatLoader` / `ChatInterface`）。<br>&nbsp;&nbsp;**Step 5-3 (done)**: `app/chat/page.tsx` を2カラムレイアウトに変更。`layout.tsx` で metadata 分離。<br>&nbsp;&nbsp;**Step 5-4 (done)**: APIレスポンス形式に合わせて `ConversationSidebar` の解析を `{ data: [...] }` に修正。<br>&nbsp;&nbsp;**Step 5-5 (done)**: `ChatLoader` で `{ data: { messages: [...] } }` を UIMessage に変換（`parts` 付与）。<br>&nbsp;&nbsp;**Step 5-6 (done)**: サイドバー幅指定の重複を整理。<br>&nbsp;&nbsp;**Step 5-7 (done)**: `tsc --noEmit` 通過＆ブラウザで一覧/詳細/新規作成の動作確認。<br>**Step 6 (todo)**: 保存→一覧→詳細の統合テストを1件追加。 |
-| **CHAT-06** | todo | 画像添付チャット | **Step 1**: `SPEC-08` を確定し仕様を固定。<br>**Step 2**: `BE-08〜BE-11` と `FE-05〜FE-06` を実装。<br>**Step 3**: `QA-08` で統合テストを通す。 |
+| **CHAT-06** | todo | 画像添付チャット | **Step 1 (done)**: `SPEC-08` 確定済み（`docs/attachments.md`）。JPEG/PNG/WebP、5MB/枚、3枚/メッセージ、1280px圧縮。<br>**Step 2**: `BE-08〜BE-11` と `FE-05〜FE-06` を実装。<br>**Step 3**: `QA-08` で統合テストを通す。 |
 
 ---
 
