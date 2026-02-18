@@ -87,14 +87,19 @@ pnpm dev
 |------------|------|
 | [onboarding.md](./docs/onboarding.md) | 新規参画者/AI向けオンボーディングマップ、チェックリスト、推奨フロー |
 | [architecture.md](./docs/architecture.md) | 全体アーキテクチャ、機能一覧、技術スタック、ディレクトリ構成、認証、Markdown/LaTeX、受け入れ基準 |
+| [acceptance.md](./docs/acceptance.md) | β版の完成基準（受け入れ条件）チェックリスト |
 | [database.md](./docs/database.md) | テーブル設計、インデックス、ER 図、データ保持・削除ポリシー |
 | [rls.md](./docs/rls.md) | RLS ポリシー、JWT クレーム、Service Role の扱い、テスト方法 |
 | [security.md](./docs/security.md) | 認証フロー、CSP/セキュリティヘッダ、Storage セキュリティ、Markdown サニタイズ、メール（SPF/DKIM/DMARC） |
+| [attachments.md](./docs/attachments.md) | 画像添付仕様（形式/サイズ/枚数/圧縮/Storage設計/UI仕様） |
 | [deployment.md](./docs/deployment.md) | 環境変数、セットアップ、Vercel デプロイ、Cron、CI/CD、Supabase Migration |
 | [testing.md](./docs/testing.md) | Vitest 設定、テスト戦略、RLS テスト、レート制限テスト、E2E |
 | [coding-guidelines.md](./docs/coding-guidelines.md) | TypeScript 方針、ESLint/Prettier、コード生成規約、Conventional Commits、PR テンプレート |
 | [troubleshooting.md](./docs/troubleshooting.md) | OAuth リダイレクト、RLS 不具合、Storage 403、LLM 429、メール迷惑判定、クォータ超過 |
 | [operational/runbook.md](./docs/operational/runbook.md) | エラー対処設計、LLM 障害対応、月次レポート失敗リトライ、インシデント対応チェックリスト |
+| [operational/monitoring.md](./docs/operational/monitoring.md) | 監視・通知方針（S1/S2/S3）、レート制限・月間クォータ仕様 |
+| [admin/conversations.md](./docs/admin/conversations.md) | スタッフ会話検索・閲覧仕様（検索条件/UI/API） |
+| [reports/monthly.md](./docs/reports/monthly.md) | 月次レポート仕様（指標/形式/送信先/Cron/手動リトライ） |
 
 ---
 
