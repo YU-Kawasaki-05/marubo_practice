@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import type { Database } from '@shared/types/database'
 
 type Conversation = Database['public']['Tables']['conversations']['Row']

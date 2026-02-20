@@ -8,11 +8,12 @@
  */
 
 import { openai } from '@ai-sdk/openai'
-import { streamText } from 'ai'
-import { convertSafeMessages } from '@shared/utils/ai-message-converter'
 import { createClient } from '@supabase/supabase-js'
+import { streamText, type UIMessage } from 'ai'
+
 import { getSupabaseAdminClient } from '@shared/lib/supabaseAdmin'
 import type { Database } from '@shared/types/database'
+import { convertSafeMessages } from '@shared/utils/ai-message-converter'
 
 // Next.jsのEdge Runtimeではなく、互換性重視でNode.js Runtimeを使用
 export const runtime = 'nodejs'
@@ -20,6 +21,18 @@ export const runtime = 'nodejs'
 // 環境変数からSupabase接続情報を作成
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+type UIMessageWithLegacyContent = UIMessage & { content?: string }
+
+const getUIMessageText = (message?: UIMessageWithLegacyContent) => {
+  if (!message) return ''
+  if (typeof message.content === 'string' && message.content.length > 0) {
+    return message.content
+  }
+  return message.parts
+    .flatMap((part) => (part.type === 'text' ? [part.text] : []))
+    .join('')
+}
 
 export async function POST(req: Request) {
   if (!process.env.OPENAI_API_KEY) {
@@ -49,9 +62,9 @@ export async function POST(req: Request) {
     // クライアント(useChat)から送られるメッセージは UI Message 形式なので、
     // 自作の Adapter 関数を使用して、安全に Model Message 形式に変換する。
     // convertToModelMessages のバグ(undefined parts)を回避する。
-    const requestBody = await req.json()
-    const { messages: uiMessages } = requestBody
-    
+    const requestBody = (await req.json()) as { messages?: UIMessageWithLegacyContent[] }
+    const uiMessages = requestBody.messages ?? []
+
     const messages = await convertSafeMessages(uiMessages)
 
     const supabaseAdmin = getSupabaseAdminClient()
@@ -59,15 +72,9 @@ export async function POST(req: Request) {
 
     const lastUserMessage = [...uiMessages]
       .reverse()
-      .find((m: any) => m.role === 'user')
+      .find((m) => m.role === 'user')
 
-    const userText =
-      (lastUserMessage?.content as string | undefined) ??
-      (lastUserMessage?.parts
-        ?.filter((p: any) => p.type === 'text')
-        .map((p: any) => p.text)
-        .join('')) ??
-      ''
+    const userText = getUIMessageText(lastUserMessage)
 
     const makeTitle = () => {
       if (userText && userText.trim().length > 0) {
@@ -134,15 +141,18 @@ export async function POST(req: Request) {
     const response = result.toUIMessageStreamResponse()
     const headers = new Headers(response.headers)
     headers.set('x-conversation-id', conversationId)
-    return new Response(response.body, { status: response.status, statusText: response.statusText, headers })
-    
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    })
   } catch (err) {
     console.error('Chat API Error:', err)
     // エラーの詳細をクライアントに返してデバッグしやすくする (本番では隠すべき)
     const errorMessage = err instanceof Error ? err.message : 'Unknown Error'
-    return new Response(JSON.stringify({ error: errorMessage }), { 
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     })
   }
 }

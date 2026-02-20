@@ -6,9 +6,10 @@
 
 'use client'
 
-import { type UIMessage } from 'ai'
 import { useChat } from '@ai-sdk/react'
+import { type UIMessage } from 'ai'
 import { useEffect, useState } from 'react'
+
 import { MessageBubble } from './MessageBubble'
 
 import { getSupabaseBrowserClient } from '@shared/lib/supabaseClient'
@@ -50,7 +51,7 @@ function ChatSession({
     if (initialMessages.length > 0) {
       setMessages(initialMessages)
     }
-  }, []) // マウント時のみ実行（親で key を制御しているため）
+  }, [initialMessages, setMessages]) // 親から切り替わった初期メッセージを反映
 
   // DEBUG: messages ステートの変化を詳細にログ出力 (必要に応じてコメント解除)
   /*
