@@ -8,7 +8,7 @@
 - RLS が効かない/効きすぎる問題
 - 署名 URL の期限切れ（Storage 403）
 - LLM 429/Timeout
-- 月次レポートの集計エラー
+- 月次レポートの生成エラー（LLM 失敗・タイムアウト）
 
 ---
 
@@ -50,10 +50,10 @@
 SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
 
 -- 無効の場合は有効化
-ALTER TABLE conversation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 
 -- ポリシーの確認
-SELECT * FROM pg_policies WHERE tablename = 'conversation';
+SELECT * FROM pg_policies WHERE tablename = 'conversations';
 ```
 
 ### 症状 2：スタッフが全件閲覧できない
@@ -198,26 +198,27 @@ DMARC: v=DMARC1; p=quarantine; rua=mailto:dmarc@your-domain.example
 
 ### 症状
 
-* Cron が実行されたが、メールが送信されていない
-* 管理 UI でエラーが表示される
+* Cron が実行されたが、レポートが生成されていない
+* 管理 UI で「✖ 失敗」ステータスの生徒がいる
 
 ### 原因
 
+* LLM API の障害・タイムアウト
 * DB 集計クエリの失敗
-* Resend API エラー
-* 環境変数の設定ミス
+* Vercel Functions のタイムアウト（生徒数が多い場合）
+* 環境変数の設定ミス（`REPORT_LLM_MODEL` 等）
 
 ### 解決方法
 
-1. **中間結果テーブルを確認**：`monthly_summary` に当月のデータがあるか
+1. **レポートステータスを確認**：`monthly_report` テーブルで失敗した生徒を特定
 2. **ログを確認**：Vercel Logs で `/api/reports/monthly` のエラーを確認
-3. **手動リトライ**：管理 UI から対象月を指定して再実行
+3. **手動リトライ**：管理 UI（`/admin/reports`）から失敗した生徒の「再生成」をクリック
 
-```ts
-// app/admin
-<button onClick={() => fetch('/api/reports/monthly?month=2025-01')}>
-  1月分を再送信
-</button>
+```sql
+-- 失敗したレポートを確認
+SELECT user_id, status, error_message
+FROM monthly_report
+WHERE month = '2026-02' AND status = 'failed';
 ```
 
 ---

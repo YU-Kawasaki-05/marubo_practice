@@ -7,13 +7,13 @@
 ## 1. アクセス制御
 
 - **対象ユーザー**: `app_metadata.role = 'staff'` のみ
-- **ページパス**: `/admin`（既存のプレースホルダーを本実装に置き換え）
+- **ページパス**: `/admin/conversations`
 - **認可チェック**: `requireStaff()` ガード。未認証/非スタッフは `/login` にリダイレクト
-- **RLS**: `conversation` / `message` テーブルの `staff_select_all` ポリシーにより全件取得可能
+- **RLS**: `conversations` / `messages` テーブルの `staff_select_all` ポリシーにより全件取得可能
 
 ---
 
-## 2. 会話一覧画面（`/admin`）
+## 2. 会話一覧画面（`/admin/conversations`）
 
 ### レイアウト
 
@@ -43,9 +43,9 @@
 | フィルタ | 入力形式 | 必須 | 備考 |
 |---------|---------|------|------|
 | **生徒メール** | テキスト入力（部分一致） | いいえ | `app_user.email ILIKE '%入力値%'` |
-| **期間（開始日）** | 日付ピッカー（`YYYY-MM-DD`） | いいえ | `conversation.created_at >= 開始日` |
-| **期間（終了日）** | 日付ピッカー（`YYYY-MM-DD`） | いいえ | `conversation.created_at < 終了日 + 1日`（終了日を含む） |
-| **キーワード** | テキスト入力 | いいえ | 会話タイトル（`conversation.subject`）に対する部分一致検索 |
+| **期間（開始日）** | 日付ピッカー（`YYYY-MM-DD`） | いいえ | `conversations.created_at >= 開始日` |
+| **期間（終了日）** | 日付ピッカー（`YYYY-MM-DD`） | いいえ | `conversations.created_at < 終了日 + 1日`（終了日を含む） |
+| **キーワード** | テキスト入力 | いいえ | 会話タイトル（`conversations.title`）に対する部分一致検索 |
 
 - フィルタはすべて任意。未指定時は全件を新しい順に表示
 - 検索は「AND 条件」で絞り込む
@@ -55,9 +55,9 @@
 | 列 | 内容 | ソート |
 |----|------|--------|
 | **生徒** | `app_user.email`（ユーザーの表示名があれば `display_name` を優先） | — |
-| **タイトル** | `conversation.subject`（先頭 50 文字で切り詰め） | — |
-| **作成日** | `conversation.created_at`（`YYYY/MM/DD HH:mm` JST 表示） | デフォルト降順 |
-| **メッセージ数** | 当該会話の `message` レコード件数 | — |
+| **タイトル** | `conversations.title`（先頭 50 文字で切り詰め） | — |
+| **作成日** | `conversations.created_at`（`YYYY/MM/DD HH:mm` JST 表示） | デフォルト降順 |
+| **メッセージ数** | 当該会話の `messages` レコード件数 | — |
 
 ### ページネーション
 
@@ -76,7 +76,7 @@
 
 | 項目 | 内容 |
 |------|------|
-| **会話タイトル** | `conversation.subject` |
+| **会話タイトル** | `conversations.title` |
 | **生徒情報** | メールアドレス + 表示名 |
 | **作成日時** | `YYYY/MM/DD HH:mm` JST |
 | **メッセージ一覧** | 時系列昇順で全メッセージを表示 |
@@ -126,7 +126,7 @@
     "conversations": [
       {
         "id": "conv_123",
-        "subject": "二次方程式の解の公式を教えて",
+        "title": "二次方程式の解の公式を教えて",
         "createdAt": "2026-02-15T12:00:00Z",
         "messageCount": 12,
         "user": {
@@ -159,7 +159,7 @@
   "requestId": "admin_conv_detail_01h9...",
   "data": {
     "id": "conv_123",
-    "subject": "二次方程式の解の公式を教えて",
+    "title": "二次方程式の解の公式を教えて",
     "createdAt": "2026-02-15T12:00:00Z",
     "user": {
       "email": "taro@example.com",

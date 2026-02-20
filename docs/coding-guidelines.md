@@ -147,7 +147,7 @@ module.exports = {
  * 入力：FormData { text: string; image?: File }
  * 出力：{ answer: string }
  * 例外：LLM失敗=502, Storage失敗=400
- * 依存：env(LLM_API_KEY, MAX_TOKENS_OUT), supabaseAdmin, quota.ts
+ * 依存：env(OPENAI_API_KEY, MAX_TOKENS_OUT), supabaseAdmin, quota.ts
  * 注意：書込はService Roleのみ。userIdの出所を必ず検証（RLS考慮）。
  */
 ```

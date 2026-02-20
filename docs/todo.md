@@ -29,7 +29,7 @@
 | **SPEC-07** | done | 完成基準（受け入れ条件）の明文化 | (完了) `docs/acceptance.md` を新規作成。生徒フロー（S-01〜S-11）・スタッフフロー（T-01〜T-09）・非機能要件（N-01〜N-11）のチェックリストを定義。β版スコープ外の項目も明記。 |
 | **SPEC-08** | done | 画像添付（Storage）仕様確定 | (完了) `docs/attachments.md` を新規作成。**決定事項**: 形式=JPEG/PNG/WebP、最大5MB/枚、最大3枚/メッセージ、長辺1280pxまで圧縮(JPEG品質0.8)、Storage保存1年。アップロードフロー・エラーハンドリング・UI仕様も定義。 |
 | **SPEC-09** | done | スタッフ会話検索・閲覧仕様 | (完了) `docs/admin/conversations.md` を新規作成。**決定事項**: 検索条件=生徒メール(部分一致)/期間/キーワード(タイトル部分一致)、AND絞り込み。一覧=メール・タイトル・作成日・メッセージ数(20件/ページ、オフセットページネーション)。詳細=全メッセージ+添付画像+タイムスタンプ、閲覧専用。API仕様も定義。 |
-| **SPEC-10** | done | 月次レポート仕様 | (完了) `docs/reports/monthly.md` を新規作成。**決定事項**: 指標=アクティブ生徒数/総会話数/総質問数/総回答数/1人あたり平均/最活発日。形式=HTMLメール本文+CSV添付(生徒別詳細)。送信=`ADMIN_EMAILS`全員、毎日23:55 JSTのCronで月末判定→即時集計&送信。dry-run/手動リトライ対応。集計SQL・メールテンプレート・API仕様も定義。 |
+| **SPEC-10** | done | 月次レポート仕様 | (完了・方針変更済み) `docs/reports/monthly.md` を全面改訂。**新方針**: メール送信から **LLM 分析による生徒個別学習レポート + Web UI 閲覧** に変更。生徒は `/reports` で自分のレポートを閲覧、スタッフは `/admin/reports` で全生徒のレポートを管理。メールは通知のみ。DBは `monthly_summary` → `monthly_report` に改名・拡張。 |
 | **SPEC-11** | done | 監視/通知・レート制限方針 | (完了) `docs/operational/monitoring.md` を新規作成。**決定事項**: β版はResendメール+Vercel/Supabaseログで運用(Sentry任意)。S1=即時メール(LLM全経路失敗/DB障害/レポート失敗/認証障害)、S2=ログ+翌日確認、S3=ログのみ。5分デバウンス付き。レート制限: 月間100問/ユーザー(`MONTHLY_QUOTA`)、10リクエスト/分/ユーザー。超過時429+UIメッセージ。 |
 
 ### 2. バックエンド実装 (BE)
@@ -50,9 +50,9 @@
 | **BE-10** | todo | 画像アップロード署名 API | **Step 1**: `app/api/attachments/sign/route.ts` を新規実装（認証必須）。<br>**Step 2**: mime/サイズ/拡張子のバリデーションを追加。<br>**Step 3**: `createSignedUploadUrl` で署名URLを返す。 |
 | **BE-11** | todo | チャット保存で添付を永続化 | **Step 1**: `/api/chat` のリクエストに `attachments` を受け付ける（配列）。<br>**Step 2**: `messages` と `attachments` を紐付けて保存。<br>**Step 3**: 会話詳細 API で attachments 情報を返す。 |
 | **BE-12** | todo | スタッフ会話検索 API | **Step 1**: `app/api/admin/conversations` (一覧) を実装（staff認証必須）。<br>**Step 2**: フィルタ（email/user_id/期間/キーワード）とページネーションを追加。<br>**Step 3**: `app/api/admin/conversations/[id]`（詳細）を実装。 |
-| **BE-13** | todo | admin/grant API | **Step 1**: `app/api/admin/grant/route.ts` を実装（staff認証必須）。<br>**Step 2**: `app_user.role` 更新 + 監査ログ（必要なら `audit_allowlist` と同様の仕組み）。 |
-| **BE-14** | todo | 月次レポート生成 API | **Step 1**: 集計SQLを作成（会話数/ユーザー数/期間）。<br>**Step 2**: `app/api/reports/monthly/route.ts` を実装（dry-run対応）。<br>**Step 3**: CSV/HTML 生成をユーティリティ化。 |
-| **BE-15** | todo | メール送信（Resend）統合 | **Step 1**: `src/shared/lib/mailer.ts` を実装。<br>**Step 2**: 月次レポート API からメール送信を行う。 |
+| **BE-13** | todo | admin/grant API | **Step 1**: `app/api/admin/grant/route.ts` を実装（`requireStaff()` + `GRANT_ALLOWED_EMAILS` チェック）。<br>**Step 2**: `app_user.role` 更新 + `auth.admin.updateUserById` で `app_metadata.role` 同期。<br>**Step 3**: `audit_grant` テーブルに監査ログ記録。<br>**Step 4**: GET エンドポイント（スタッフ一覧 + 操作履歴）を実装。<br>仕様: `docs/admin/grant.md` |
+| **BE-14** | todo | 月次レポート生成 API | **Step 1**: `monthly_report` テーブルマイグレーションを作成（`monthly_summary` からの置換）。<br>**Step 2**: `POST /api/reports/monthly` を実装（Cron 認証 + 月末判定 + 全生徒ループ）。<br>**Step 3**: 生徒ごとの統計集計 + LLM 分析プロンプト作成。<br>**Step 4**: `REPORT_LLM_MODEL` / `REPORT_LLM_API_KEY` での LLM 呼び出し。<br>**Step 5**: `monthly_report` への結果保存（成功/失敗）。<br>**Step 6**: 完了通知メール送信（Resend）。<br>仕様: `docs/reports/monthly.md` |
+| **BE-15** | todo | レポート閲覧・CSV API | **Step 1**: `GET /api/reports/monthly` を実装（生徒=自分のみ、スタッフ=全員）。<br>**Step 2**: `GET /api/reports/monthly/csv` を実装（スタッフのみ）。<br>**Step 3**: `src/features/reports/toCsv.ts` ユーティリティ。 |
 | **BE-16** | todo | 監視・通知ユーティリティ | **Step 1**: `src/shared/lib/notifier.ts` を作成（Sentry/Resend など）。<br>**Step 2**: 重要API (`/api/chat`, `/api/reports/monthly`) の例外で通知を送る。 |
 | **BE-17** | todo | レート制限/使用量カウンター | **Step 1**: `usage_counters` / `rate_limiter` テーブルを追加。<br>**Step 2**: `/api/chat` でレート制限を適用。<br>**Step 3**: レート超過時の応答とログを整備。 |
 
@@ -69,8 +69,9 @@
 | **FE-05** | todo | チャット画像添付 UI | **Step 1**: `ChatInterface` にファイル選択UIを追加（画像のみ/複数可）。<br>**Step 2**: 画像プレビューと削除UIを作る。<br>**Step 3**: `/api/attachments/sign` で署名URL取得→Storageにアップロード。 |
 | **FE-06** | todo | 添付画像の表示 | **Step 1**: `/api/conversations/[id]` の `attachments` を受け取りUIで表示。<br>**Step 2**: `MessageBubble` に画像レンダリングを追加（サイズ制限・拡大表示）。 |
 | **FE-07** | todo | スタッフ会話検索 UI | **Step 1**: `/admin/conversations` ページを作成（一覧 + フィルタ）。<br>**Step 2**: 会話詳細（メッセージ/画像）を表示。<br>**Step 3**: ページネーション/検索結果の空状態を整備。 |
-| **FE-08** | todo | 月次レポート UI | **Step 1**: `/admin/reports` ページを作成（過去レポート一覧）。<br>**Step 2**: 手動実行（dry-run / 本送信）ボタンを配置。<br>**Step 3**: CSV/HTML のダウンロードリンクを表示。 |
-| **FE-09** | todo | スタッフ権限付与 UI | **Step 1**: `/admin/grant` 画面でメール入力→権限付与。<br>**Step 2**: 付与履歴/エラー表示を追加。 |
+| **FE-08** | todo | 生徒用レポートページ | **Step 1**: `/reports` ページを作成（月選択 + 記事風レポート表示）。<br>**Step 2**: `react-markdown` + `remark-gfm` で Markdown レンダリング（note/Zenn風の1カラムデザイン）。<br>**Step 3**: チャット画面から「📊 レポート」ボタンで遷移できるようにする。<br>**Step 4**: 未生成月の表示（「まだ生成されていません」）を実装。 |
+| **FE-09** | todo | スタッフ用レポート管理 UI | **Step 1**: `/admin/reports` ページを作成（全生徒レポート一覧 + ステータス表示）。<br>**Step 2**: 手動生成（dry-run / 本実行）ボタンを配置。<br>**Step 3**: 失敗生徒の個別再生成ボタン。<br>**Step 4**: CSV ダウンロードボタンを配置。 |
+| **FE-10** | todo | スタッフ権限付与 UI | **Step 1**: `/admin/grant` 画面でメール入力→権限付与。<br>**Step 2**: 現在のスタッフ一覧 + 操作履歴を表示。<br>**Step 3**: 解除ボタン・確認ダイアログ・バリデーション。<br>仕様: `docs/admin/grant.md` |
 
 ### 4. テスト & QA (QA)
 
@@ -87,9 +88,11 @@
 | **QA-07** | review | Supabase モック E2E | (実装済み) MOCK_SUPABASE を用いたテスト環境整備済み。 |
 | **QA-08** | todo | 画像添付の統合テスト | **Step 1**: 署名URL取得→Storageアップロード→`/api/chat` 保存までの流れをテスト。<br>**Step 2**: 画像が `/api/conversations/[id]` に含まれることを確認。 |
 | **QA-09** | todo | スタッフ会話検索テスト | **Step 1**: staff 権限で一覧/詳細が取れる。<br>**Step 2**: 生徒ユーザーではアクセス不可 (403/401)。 |
-| **QA-10** | todo | 月次レポートテスト | **Step 1**: dry-run で CSV/HTML 生成を確認。<br>**Step 2**: Resend モックで送信成功を検証。 |
+| **QA-10** | todo | 月次レポートテスト | **Step 1**: dry-run で統計集計・ LLM モック応答・ Markdown 生成を確認。<br>**Step 2**: `monthly_report` への保存を検証。<br>**Step 3**: 生徒用 API で自分のレポートのみ取得できることを確認（RLS）。 |
 | **QA-11** | todo | レート制限テスト | **Step 1**: 連続リクエストで 429 が返る。<br>**Step 2**: 制限解除タイミングを確認。 |
 | **QA-12** | todo | 運用・通知テスト | **Step 1**: 強制エラーで notifier が発火する。<br>**Step 2**: 監視ログが残ることを確認。 |
+| **QA-13** | todo | スタッフ権限付与テスト | **Step 1**: `GRANT_ALLOWED_EMAILS` に含まれるスタッフが付与/解除できる。<br>**Step 2**: 含まれないスタッフは 403 が返る。<br>**Step 3**: `audit_grant` にログが残ることを確認。 |
+| **QA-14** | todo | レポート UI テスト | **Step 1**: 生徒で `/reports` にアクセスし、自分のレポートが Markdown 表示される。<br>**Step 2**: スタッフで `/admin/reports` にアクセスし、全生徒のレポート一覧が表示される。<br>**Step 3**: CSV ダウンロードが正しい形式で取得できる。 |
 ### 5. 運用 / DevOps (OPS)
 
 | ID | Status | 概要 | 詳細ステップ (Step) |
@@ -99,9 +102,9 @@
 | **OPS-03** | blocked | Allowlist 変更通知設計 | (ユーザー確認待ち) |
 | **OPS-04** | review | README 統合反映 | (完了確認) `README.new.md` が削除され、`README.md` に統合されているか確認する。 |
 | **OPS-05** | todo | Resend セットアップ | **Step 1**: 送信ドメイン/送信元アドレスを確定。<br>**Step 2**: `RESEND_API_KEY` を本番/開発に設定。<br>**Step 3**: `docs/deployment.md` に手順を追記。 |
-| **OPS-06** | todo | Vercel Cron 設定 | **Step 1**: `vercel.json` に Cron 設定を追加（`55 23 * * *` / `Asia/Tokyo`）。<br>**Step 2**: dry-run はクエリパラメータ `?dryRun=true` で切替。通常 Cron は本送信。手動リトライ時に dry-run 選択可。仕様は `docs/reports/monthly.md` に記載済み。 |
+| **OPS-06** | todo | Vercel Cron 設定 | **Step 1**: `vercel.json` に Cron 設定を追加（`55 23 * * *` / `Asia/Tokyo`）。<br>**Step 2**: dry-run はクエリパラメータ `?dryRun=true` で切替。通常 Cron は本実行。手動リトライ時に dry-run 選択可。<br>**※ 月末に LLM 分析を実行するため、Vercel Functions のタイムアウトに注意（分割実行戦略は `docs/reports/monthly.md` 参照）**。仕様は `docs/reports/monthly.md` に記載済み。 |
 | **OPS-07** | todo | 監視・通知導入 | **方針確定済み**: β版は Resend メール + Vercel/Supabase ログ。Sentry は任意（将来推奨）。仕様は `docs/operational/monitoring.md` に記載済み。<br>**Step 1**: `src/shared/lib/notifier.ts` を実装（BE-16 と連動）。<br>**Step 2**: `ADMIN_EMAILS` / `MAIL_FROM` を本番環境に設定。 |
-| **OPS-08** | todo | 本番環境の秘密情報管理 | **Step 1**: `.env.example` に不足分を追記。<br>**Step 2**: `docs/deployment.md` に必須env一覧を整理。 |
+| **OPS-08** | todo | 本番環境の秘密情報管理 | **Step 1**: `.env.example` に不足分を追記（`REPORT_LLM_MODEL`, `REPORT_LLM_API_KEY`, `REPORT_MAX_TOKENS_OUT`, `GRANT_ALLOWED_EMAILS` を含む）。<br>**Step 2**: `docs/deployment.md` に必須env一覧を整理。 |
 
 ### 6. チャット機能実装 (CHAT)
 

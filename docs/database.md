@@ -6,7 +6,7 @@
 ## 本書で扱う内容
 - テーブル定義（DDL）
 - インデックス・制約
-- 月次集計（monthly_summary）
+- 月次レポート（monthly_report）
 - usage_counters によるクォータ/レート設計
 - ER 図とリレーション
 - データ削除ポリシー
@@ -49,7 +49,7 @@
 * **手法**: `allowed_email` テーブルの `status` を `'revoked'` に更新する。
 * **挙動**:
     * 対象のメールアドレスではログインできなくなる。
-    * 過去の会話データ（`conversation`, `message`）は**保持される**。
+    * 過去の会話データ（`conversations`, `messages`）は**保持される**。
     * スタッフ画面からは「退会済み」として参照可能。
 
 ### 2. データの物理削除が必要な場合
@@ -113,48 +113,55 @@ create table if not exists audit_allowlist (
 create index if not exists idx_audit_allowlist_email_created on audit_allowlist(email, created_at desc);
 
 -- 4) 会話
-create table if not exists conversation (
+create table if not exists conversations (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references app_user(id) on delete cascade,
-  subject text,
-  created_at timestamptz default now()
+  user_id uuid not null,                -- auth.uid()（Supabase Auth UUID）を直接保存。app_user への FK は張らない
+  title text not null,
+  created_at timestamptz not null default now()
 );
-create index if not exists idx_conversation_user_created on conversation(user_id, created_at desc);
+create index if not exists idx_conversations_user_created on conversations(user_id, created_at desc);
 
 -- 5) メッセージ
-create table if not exists message (
+create table if not exists messages (
   id uuid primary key default gen_random_uuid(),
-  conv_id uuid not null references conversation(id) on delete cascade,
-  sender text not null check (sender in ('user','assistant')),
-  text text,
-  md text,
-  tokens_in int default 0,
-  tokens_out int default 0,
-  created_at timestamptz default now()
+  conversation_id uuid not null references conversations(id) on delete cascade,
+  role text not null check (role in ('user','assistant')),
+  content text not null,
+  created_at timestamptz not null default now()
 );
-create index if not exists idx_message_conv_created on message(conv_id, created_at);
+create index if not exists idx_messages_conversation_created on messages(conversation_id, created_at asc);
 
 -- 6) 添付
-create table if not exists attachment (
+create table if not exists attachments (
   id uuid primary key default gen_random_uuid(),
-  message_id uuid not null references message(id) on delete cascade,
-  storage_path text not null,  -- 'userId/convId/messageId/uuid.jpg'
-  mime text,
-  width int, height int, size_bytes int
+  message_id uuid not null references messages(id) on delete cascade,
+  user_id uuid not null,               -- auth.uid() を保存（Storage パス生成・RLS 用）
+  storage_path text not null,           -- '{user_id}/{conversation_id}/{message_id}/{uuid}.jpg'
+  mime_type text,
+  size_bytes int,
+  created_at timestamptz not null default now()
 );
 
--- 7) 月次サマリ
-create table if not exists monthly_summary (
+-- 7) 月次レポート（LLM 分析結果 + 利用統計）
+create table if not exists monthly_report (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references app_user(id) on delete cascade,
-  month text not null, -- 'YYYY-MM'
-  questions int default 0,
-  by_subject jsonb,
-  avg_tokens_per_q numeric,
-  top_keywords text[],
+  month text not null,               -- 'YYYY-MM'
+  status text not null default 'pending'
+    check (status in ('pending', 'generating', 'generated', 'failed')),
+  content text,                      -- LLM 生成の Markdown テキスト（レポート本文）
+  stats jsonb,                       -- 利用統計（questions, conversations, activeDays, mostActiveDay 等）
+  llm_model text,                    -- 使用した LLM モデル名
+  llm_tokens_in int default 0,       -- 入力トークン数（コスト追跡用）
+  llm_tokens_out int default 0,      -- 出力トークン数（コスト追跡用）
+  error_message text,                -- 失敗時のエラーメッセージ
+  generated_at timestamptz,          -- 生成完了日時
   created_at timestamptz default now(),
   unique(user_id, month)
 );
+
+create index if not exists idx_monthly_report_month on monthly_report(month);
+create index if not exists idx_monthly_report_user_month on monthly_report(user_id, month);
 
 -- 8) 利用カウンタ（クォータ/レート制限用）
 create table if not exists usage_counters (
@@ -180,12 +187,12 @@ create index if not exists idx_rate_limiter_key on rate_limiter(key);
 ```
 
 * `allowed_email.status` は `active`（利用可）/`pending`（まだ利用不可）/`revoked`（退会済み）の 3 値で管理する。`/app/api/sync-user` は `active` のみユーザー作成を許可し、それ以外は 403 を返して UI に「塾に連絡してください」のメッセージを表示する。
-* `allowed_email` はスタッフのみ閲覧・編集できるよう、RLS で `(auth.jwt() -> 'app_metadata' ->> 'role') = 'staff'` のみ select/insert/update/delete を許可する。Service Role API（管理 UI や seed script）ではバルク登録が可能。
+* `allowed_email` はスタッフのみ編集可。SELECT は「スタッフ=全件」「生徒=自分のメールのみ」の二重ポリシー（`20260113000000_fe04_self_read.sql` で適用済み）。これにより生徒はログイン後に自分の許可状態を確認でき、`AccountStatusBanner` で表示される。Service Role API（管理 UI や seed script）ではバルク登録が可能。
 * 変更履歴は `audit_allowlist` に `prev`/`next`/`operation`/`request_id`/`staff_user_id` を保存し、少なくとも 90 日以上保持する。
 * `usage_counters.day` は API 層で `(now() at time zone 'Asia/Tokyo')::date` を用いて JST 基準で算出し、CHECK 制約によりマイナス値の混入を即座に検知する。
 * `rate_limiter.key` には `chat:user:{user_id}` や `chat:ip:{ip}` などの識別子を格納し、`window_start` には `date_trunc('minute', now())` など固定長ウィンドウの先頭を保存する。
 * API からは `select allow_request('chat:user:xxx', 10, 60);` のような Postgres 関数（例：`allow_request(p_key text, p_limit int, p_window_seconds int)`）を呼び出し、false の場合は HTTP 429 を返して処理を中断する。
-* 将来的に全文検索を高速化する場合は、`message.text` や `conversation.subject` に `pg_trgm` / `tsvector` インデックスを加える余地がある。
+* 将来的に全文検索を高速化する場合は、`messages.content` や `conversations.title` に `pg_trgm` / `tsvector` インデックスを加える余地がある。
 
 
 
@@ -237,19 +244,19 @@ using (
 ## ER 図とリレーション
 
 ```
-app_user (1) ────< (N) conversation
-conversation (1) ─< (N) message
-message (1) ──────< (N) attachment
+auth.users (1) ──── user_id ────< (N) conversations
+conversations (1) ─< (N) messages
+messages (1) ──────< (N) attachments
 
-app_user (1) ────< (N) monthly_summary
+app_user (1) ────< (N) monthly_report
 app_user (1) ────< (N) usage_counters
 ```
 
-* **app_user** は Supabase Auth の `auth.users.id` と `auth_uid` で 1:1 関連
-* **conversation** は `user_id` で所有者を特定
-* **message** は `conv_id` で会話に紐付き、`sender` で発言者（user/assistant）を区別
-* **attachment** は `message_id` で特定メッセージの画像を保持
-* **monthly_summary** と **usage_counters** は各ユーザーの集計・クォータ管理用
+* **conversations.user_id** は `auth.uid()`（Supabase Auth UUID）を直接保存。`app_user` への FK は張らず、RLS は `user_id = auth.uid()` で直接比較する。`app_user` との紐付けが必要な管理系クエリでは `app_user.auth_uid = conversations.user_id` で JOIN する
+* **messages** は `conversation_id` で会話に紐付き、`role`（`user` / `assistant`）で発言者を区別
+* **attachments** は `message_id` で特定メッセージの画像を保持
+* **monthly_report** は各ユーザーの月次レポート（LLM 分析テキスト + 統計）を保持。`user_id` は `app_user.id` を参照
+* **usage_counters** はクォータ/レート制限管理用。`user_id` は `app_user.id` を参照
 
 ---
 
@@ -264,9 +271,9 @@ app_user (1) ────< (N) usage_counters
 
 ## パフォーマンス考慮事項
 
-* **インデックス**：`conversation(user_id, created_at desc)` と `message(conv_id, created_at)` により、履歴取得クエリを高速化
-* **全文検索**：将来的に `pg_trgm` や `tsvector` を `message.text` / `conversation.subject` に適用し、キーワード検索を高速化する余地あり
-* **集計クエリ**：月次レポート生成時は `monthly_summary` テーブルを活用し、毎回の再集計を回避
+* **インデックス**：`conversations(user_id, created_at desc)` と `messages(conversation_id, created_at asc)` により、履歴取得クエリを高速化
+* **全文検索**：将来的に `pg_trgm` や `tsvector` を `messages.content` / `conversations.title` に適用し、キーワード検索を高速化する余地あり
+* **集計クエリ**：月次レポート生成時は `monthly_report.stats` に統計を JSON で保存し、再集計を回避。LLM 分析テキストは `content` カラムに Markdown で保存
 * **Connection Pooling**：Supabase の Pooler を利用し、サーバーレス環境でのコネクション枯渇を防ぐ
 
 ---

@@ -20,8 +20,9 @@
 * **初回ログイン**：`/api/sync-user` が **Service Role** で `allowed_email` テーブルを照合し、`status = 'active'` のメールのみ `app_user` に upsert
   * `email` は小文字化して保存（`allowed_email` / `app_user` どちらも小文字一意）
   * `role` は常に `student` で作成/更新。許可リストに無いメールは 403 を返し、クライアントに「塾に連絡してください」と表示する
-* **ロール昇格**：`/api/admin/grant` など **Service Role + `x-internal-token: ${ADMIN_TASK_TOKEN}`** を要求する内部 API のみが実施
+* **ロール昇格**：`/api/admin/grant` は **`requireStaff()` + `GRANT_ALLOWED_EMAILS` チェック** で認可
   * Supabase Auth の `app_metadata.role` と `app_user.role` を同期
+  * 操作可能なユーザーは `GRANT_ALLOWED_EMAILS` 環境変数で2名に制限（サーバー側のみ、`NEXT_PUBLIC_*` にはしない）
 * **JWT 発行**：`app_metadata.role` を含む JWT をクライアントへ発行
 * **RLS 判定**：発行された JWT の `app_metadata.role` を RLS が参照し、**生徒=自分のみ / スタッフ=全件** を保証
 
@@ -60,9 +61,9 @@
 * **Node.js ランタイムのサーバー API のみ**
   * `/app/api/chat/route.ts` — LLM 応答を DB に保存
   * `/app/api/sync-user/route.ts` — 初回ログイン時の許可リスト照合 + ユーザー作成
-  * `/app/api/admin/grant/route.ts` — ロール昇格（内部トークン必須）
+  * `/app/api/admin/grant/route.ts` — ロール昇格（`requireStaff()` + `GRANT_ALLOWED_EMAILS` 制限）
   * `/app/api/admin/allowlist/route.ts` — 許可メールリスト CRUD（staff UI から呼び出す）
-  * `/app/api/reports/monthly/route.ts` — 月次集計
+  * `/app/api/reports/monthly/route.ts` — 月次レポート生成（LLM 分析 + DB 保存）
 
 ### ❌ 使用が禁止される場所
 

@@ -115,7 +115,7 @@ describe('RLS: 学生は自分の会話のみ取得', () => {
     const supabase = createClient(url, anonKey, {
       global: { headers: { Authorization: `Bearer ${studentJWT}` } }
     })
-    const { data, error } = await supabase.from('conversation').select('*')
+    const { data, error } = await supabase.from('conversations').select('*')
     expect(error).toBeNull()
     expect(data).toHaveLength(1) // 自分の会話のみ
   })
@@ -125,7 +125,7 @@ describe('RLS: 学生は自分の会話のみ取得', () => {
       global: { headers: { Authorization: `Bearer ${studentJWT}` } }
     })
     const { data } = await supabase
-      .from('conversation')
+      .from('conversations')
       .select('*')
       .eq('user_id', 'other-user-uuid')
     expect(data).toHaveLength(0) // RLS で弾かれる
@@ -141,7 +141,7 @@ describe('RLS: スタッフは全件取得', () => {
     const supabase = createClient(url, anonKey, {
       global: { headers: { Authorization: `Bearer ${staffJWT}` } }
     })
-    const { data, error } = await supabase.from('conversation').select('*')
+    const { data, error } = await supabase.from('conversations').select('*')
     expect(error).toBeNull()
     expect(data.length).toBeGreaterThan(1) // 複数ユーザー分
   })
