@@ -22,20 +22,25 @@ SUPABASE_SERVICE_ROLE_KEY=            # サーバーAPIのみ利用（Edge不可
 MOCK_SUPABASE=                        # 招待待ち/CIでDBをモックする場合に 'true' を設定（本番では空）
 
 # LLM（プライマリ）
-LLM_API_KEY=
+OPENAI_API_KEY=                       # @ai-sdk/openai が自動読み込み
 DEFAULT_MODEL=gpt-4o-mini
 
 # LLM（フォールバック用・別ベンダー/別エンドポイント推奨）
-LLM_FALLBACK_API_KEY=
+OPENAI_FALLBACK_API_KEY=
 FALLBACK_MODEL=gpt-4o-mini
 TEMPERATURE=0.3
 MAX_TOKENS_OUT=800
+
+# LLM（月次レポート生成用・推論向けモデル）
+REPORT_LLM_MODEL=                     # 例: gpt-4o, claude-sonnet-4-20250514 等
+REPORT_LLM_API_KEY=                   # 未設定時は OPENAI_API_KEY を使用
+REPORT_MAX_TOKENS_OUT=2000
 
 # App
 BASE_URL=http://localhost:3000
 ADMIN_EMAILS=staff1@example.com;staff2@example.com  # S1通知先（ロール判定には不使用）
 DEV_ALERT_EMAILS=dev1@example.com
-ADMIN_TASK_TOKEN=                                  # /api/admin/grant 等の内部タスクAPI専用トークン
+ADMIN_TASK_TOKEN=                                  # ℹ️ 廃止予定。スタッフ権限付与は GRANT_ALLOWED_EMAILS 方式に統一
 MONTHLY_QUOTA=100
 MAX_IMAGE_LONGEDGE=1280
 APP_TIMEZONE=Asia/Tokyo
@@ -49,7 +54,7 @@ SENTRY_DSN=
 ```
 
 * `ADMIN_EMAILS`：S1 以上の重大障害をメール通知する宛先。ロール付与判定には使用しない。
-* `ADMIN_TASK_TOKEN`：`/api/admin/grant` など内部タスク API で `x-internal-token` ヘッダとして送信する固定値。Service Role Key と同様に厳重管理し、クライアントへは一切渡さない。
+* `ADMIN_TASK_TOKEN`：**廃止予定**。スタッフ権限付与は UI (`/admin/grant`) からの操作 + `GRANT_ALLOWED_EMAILS` 制限に統一。新規環境では設定不要。
 * フォールバック用 LLM キーは可能な限り別ベンダー / 別エンドポイントとし、429 / 5xx / Timeout 時に `DEFAULT_MODEL` から `FALLBACK_MODEL` へ自動で切り替える。
 
 ## 開発ワークフロー
@@ -148,6 +153,8 @@ export const runtime = 'nodejs' // Edge Runtime は使用しない
 
 * **Vercel Cron は「月末指定 L」を保証しない**ため、**毎日 23:55 JST 実行**に変更
 * 実装で **「今日が月末か」判定**して月次処理のみ実行
+* 月末には各生徒のチャット履歴を LLM が分析し、個別学習レポートを生成・保存
+* 生成完了後、スタッフに通知メールを送信（レポート本体は UI で閲覧）
 
 #### vercel.json
 

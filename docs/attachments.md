@@ -67,7 +67,7 @@
   11. アップロード完了後、storagePath をチャット送信に含める
   ↓
 [サーバー /api/chat]
-  12. メッセージ保存時に attachment レコードを INSERT
+  12. メッセージ保存時に `attachments` レコードを INSERT
   13. LLM に画像 URL を渡す（Vision 対応モデルの場合）
 ```
 
@@ -96,20 +96,19 @@
 
 ---
 
-## 6. attachment テーブル
+## 6. attachments テーブル
 
 `docs/database.md` に記載済みの定義に準拠する。
 
 ```sql
-CREATE TABLE IF NOT EXISTS attachment (
+CREATE TABLE IF NOT EXISTS attachments (
   id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  message_id    UUID NOT NULL REFERENCES message(id) ON DELETE CASCADE,
+  message_id    UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+  user_id       UUID NOT NULL,                -- auth.uid() を保存（Storage パス生成・RLS 用）
   storage_path  TEXT NOT NULL,
-  mime          TEXT NOT NULL,
-  width         INT,
-  height        INT,
-  size_bytes    INT NOT NULL,
-  created_at    TIMESTAMPTZ DEFAULT now()
+  mime_type     TEXT,
+  size_bytes    INT,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
 
@@ -122,7 +121,7 @@ CREATE TABLE IF NOT EXISTS attachment (
 
 | 項目 | 期間 | 備考 |
 |------|------|------|
-| **DB レコード（attachment 行）** | 会話データと同じ（論理削除方針に準拠） | `docs/database.md` のデータ削除ポリシー参照 |
+| **DB レコード（`attachments` 行）** | 会話データと同じ（論理削除方針に準拠） | `docs/database.md` のデータ削除ポリシー参照 |
 | **Storage オブジェクト** | **1 年** | Supabase Storage 無料枠内で運用。1 年経過後に手動確認して削除を検討 |
 
 β 版の規模（約 20 名）では、1 年で見積もった Storage 使用量:
@@ -164,7 +163,7 @@ CREATE TABLE IF NOT EXISTS attachment (
 
 ## 関連ドキュメント
 
-- [データベース設計](./database.md)（attachment テーブル、Storage ポリシー）
+- [データベース設計](./database.md)（`attachments` テーブル、Storage ポリシー）
 - [セキュリティポリシー](./security.md)（MIME チェック、署名 URL）
 - [API 仕様](./api.md)（`/api/attachments/sign`）
 - [TODO / Roadmap](./todo.md)（BE-08 〜 BE-11, FE-05 〜 FE-06）

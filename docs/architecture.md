@@ -20,6 +20,7 @@
 * Google ログイン（Supabase Auth）
 * テキスト/画像の同時送信、AI 応答（Markdown/LaTeX）
 * 会話履歴一覧/詳細
+* 月次学習レポート閲覧（`/reports`）
 * 入力チェック（画像サイズ/形式）、送信失敗の再試行
 
 ### スタッフ
@@ -27,14 +28,15 @@
 * Google ログイン（管理者ロール）
 * 会話検索（期間/ユーザー）
 * 会話詳細閲覧
-* 月次レポート受信（CSV/HTML）、**管理UIで手動リトライ**
+* 月次レポート閲覧・手動生成・再生成・CSV ダウンロード
+* スタッフ権限付与（UI から）
 
 ### 共通/自動処理
 
 * 画像アップロード（**短寿命の署名URL**）
 * **DBベース**のクォータ/レート制限
 * LLM 再試行/フォールバック
-* **毎日 23:55 実行 → 月末判定** でレポート送信
+* **毎日 23:55 実行 → 月末判定** → LLM が生徒個別の学習レポートを生成・保存 → 通知メール送信
 * 重大エラー通知（Resend メール、Sentry 任意）
 
 ### CSVファイルの取り扱い
@@ -87,13 +89,14 @@
 ```
 [Browser]
   ├─ /chat  : 生徒UI（送信/履歴閲覧）
-  ├─ /admin : スタッフUI（検索/閲覧/レポート再実行）
+  ├─ /reports: 生徒用学習レポート閲覧
+  ├─ /admin : スタッフUI（検索/閲覧/レポート管理/権限付与）
   └─ fetch  : /api/*
          ├─ chat            : LLM呼び出し＋保存（Service RoleでDB書込）
          ├─ attachments/sign: 署名URL発行（Storage直PUT）
-         ├─ reports/monthly : 集計→CSV/HTML→メール送信（Cron/手動）
+         ├─ reports/monthly : LLM分析→レポート生成・保存（Cron/手動）、一覧取得、CSVダウンロード
          ├─ sync-user       : 初回ログイン同期（role=student固定）
-         └─ admin/grant     : 管理者ロール付与（Service Role + 内部トークン）
+         └─ admin/grant     : 管理者ロール付与（requireStaff() + GRANT_ALLOWED_EMAILS）
 
 [Next.js on Vercel (Node runtime)] ── uses ── [Supabase]
                                           ├─ Auth (Google)
@@ -113,13 +116,17 @@
 .
 ├─ app/
 │  ├─ chat/page.tsx
+│  ├─ reports/page.tsx               # 生徒用学習レポート閲覧
 │  ├─ admin/
 │  │  ├─ page.tsx                 # 会話検索/閲覧
-│  │  └─ allowlist/page.tsx       # 許可メール管理
+│  │  ├─ allowlist/page.tsx       # 許可メール管理
+│  │  ├─ reports/page.tsx         # スタッフ用レポート管理
+│  │  └─ grant/page.tsx           # スタッフ権限付与
 │  ├─ api/
 │  │  ├─ chat/route.ts
 │  │  ├─ attachments/sign/route.ts
 │  │  ├─ reports/monthly/route.ts
+│  │  ├─ reports/monthly/csv/route.ts
 │  │  ├─ sync-user/route.ts
 │  │  └─ admin/
 │  │      ├─ grant/route.ts       # 管理者ロール付与（Service Role + 内部トークン）
@@ -134,7 +141,7 @@
 │  │  ├─ admin/
 │  │  │  ├─ search/      (AdminTable.tsx など会話検索)
 │  │  │  └─ allowlist/   (AllowedEmailTable.tsx, useAllowlistMutations.ts)
-│  │  └─ reports/        (monthlySql.ts, toCsv.ts, jobs/runMonthly.ts)
+│  │  └─ reports/        (generateReport.ts, reportPrompt.ts, toCsv.ts, jobs/runMonthly.ts)
 │  ├─ shared/
 │  │  ├─ lib/            (supabaseClient.ts, supabaseAdmin.ts, llm.ts, mailer.ts,
 │  │  │                   errors.ts, errorPresenter.ts, apiHandler.ts, notifier.ts)
@@ -230,7 +237,7 @@ const customSchema = {
 
 - [ ] 生徒がテキスト/画像で質問し、**Markdown/KaTeX** で崩れず表示される
 - [ ] 自分の会話のみ閲覧、スタッフは**全件**（RLS 検証済み）
-- [ ] **毎日 23:55 実行**で**月末のみ**レポート送信（手動リトライ可）
+- [ ] **毎日 23:55 実行**で**月末のみ**生徒個別レポート生成（手動リトライ可）
 - [ ] LLM 障害/429 で**即時案内＋自動再試行/フォールバック**
 - [ ] すべての API が **`requestId`** を返し、S1 以上は**メール通知**
 
@@ -258,7 +265,8 @@ const customSchema = {
 
 * **会話検索**：期間/ユーザーでフィルタリング
 * **会話詳細閲覧**：メッセージ一覧、画像表示、タイムスタンプ
-* **月次レポート手動リトライ**：対象月を指定して再実行
+* **月次レポート管理**（`/admin/reports`）：全生徒のレポート閲覧・手動生成・再生成・CSV ダウンロード
+* **スタッフ権限付与**（`/admin/grant`）：指定メールのユーザーを `staff` に昇格（付与可能者 2 名限定）
 * **許可メール管理（/admin/allowlist）**：`allowed_email` の登録/状態変更/CSV インポート。`status` ごとに色分けし、変更履歴を `audit_allowlist` に記録
 
 ### アクセス制御

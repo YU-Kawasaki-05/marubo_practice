@@ -127,26 +127,31 @@ async function callLLM(prompt: string): Promise<string> {
 
 ### 検知
 
-* Cron 実行後、メールが届かない
+* Cron 実行後、通知メールに「失敗件数: N 件」が含まれる
 * Vercel Logs でエラーを確認
+* 管理画面（`/admin/reports`）で「✖ 失敗」ステータスの生徒を確認
 
 ### 中間結果確認
 
 ```sql
--- monthly_summary に当月のデータがあるか
-SELECT * FROM monthly_summary WHERE month = '2025-01';
+-- monthly_report に当月のデータがあるか
+SELECT user_id, status, error_message, generated_at
+FROM monthly_report
+WHERE month = '2026-02'
+ORDER BY status;
 ```
 
 ### 手動リトライ
 
-1. **管理 UI** → 「レポート再実行」ボタン
-2. 対象月を指定：`/api/reports/monthly?month=2025-01`
-3. Resend Dashboard でメール送信を確認
+1. **管理 UI**（`/admin/reports`）→ 失敗した生徒の「再生成」ボタンをクリック
+2. または全体再実行：「▶ 手動生成」で対象月を指定（`status != 'generated'` の生徒から再開）
+3. LLM API が全面障害の場合は、復旧を待ってから再実行
 
-### 段階保存
+### 生成フロー
 
-* **集計 → CSV 生成 → HTML 生成 → メール送信**
-* 途中で失敗しても、成功したステップはスキップ可能
+* **対象生徒取得 → 統計集計 → LLM 分析 → DB 保存 → 通知メール**
+* 生徒ごとに独立して処理。特定生徒で失敗しても次の生徒に進む
+* 失敗した生徒は `monthly_report.status = 'failed'` で記録され、個別に再生成可能
 
 ---
 
@@ -159,7 +164,7 @@ SELECT * FROM monthly_summary WHERE month = '2025-01';
 async function deleteConversation(convId: string) {
   // 1. 添付ファイルのパスを取得
   const { data: attachments } = await supabase
-    .from('attachment')
+    .from('attachments')
     .select('storage_path')
     .eq('message_id', messageId)
   
@@ -168,8 +173,8 @@ async function deleteConversation(convId: string) {
     await supabase.storage.from('attachments').remove([att.storage_path])
   }
   
-  // 3. DB から会話削除（CASCADE で message, attachment も削除）
-  await supabase.from('conversation').delete().eq('id', convId)
+  // 3. DB から会話削除（CASCADE で messages, attachments も削除）
+  await supabase.from('conversations').delete().eq('id', convId)
 }
 ```
 

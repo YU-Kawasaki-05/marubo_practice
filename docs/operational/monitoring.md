@@ -141,7 +141,7 @@ export async function notifyError(
 |------|-----|------|
 | **制限単位** | **ユーザー単位** | `app_user.id` ごとにカウント |
 | **月間質問上限** | **100 問/月** | 環境変数 `MONTHLY_QUOTA=100` で調整可能 |
-| **カウント対象** | `/api/chat` への POST（`sender = 'user'` のメッセージ） | AI の応答はカウントしない |
+| **カウント対象** | `/api/chat` への POST（`role = 'user'` のメッセージ） | AI の応答はカウントしない |
 | **リセットタイミング** | 毎月 1 日 00:00 JST | `usage_counters.day` の月集計でリセットされる |
 
 **超過時の動作**:

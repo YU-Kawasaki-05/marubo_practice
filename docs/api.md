@@ -7,11 +7,13 @@
 
 | 項目 | 内容 |
 |------|------|
-| ベースパス | `/api/*`（Next.js App Router、全エンドポイントで `export const runtime = 'nodejs'` を強制） |
-| 認証 | Supabase Auth のアクセストークンを `Authorization: Bearer <token>` で送信。管理系 API は追加で `x-internal-token` or `requireStaff()` を課す |
+| ベースパス | `/api/*`（Next.js App Router）。原則 `export const runtime = 'nodejs'`。例外: `/api/health` は `edge` |
+| 認証 | Supabase Auth のアクセストークンを `Authorization: Bearer <token>` で送信。管理系 API は `requireStaff()` を課す（`/api/admin/grant` はさらに `GRANT_ALLOWED_EMAILS` 制限） |
 | エラー形式 | `{ "requestId": string, "error": { "code": string, "message": string, "details"?: Record<string, string> } }` |
 | 正常レスポンス | `{ "requestId": string, "data": ... }` 形式で統一 |
 | ログ | すべての Handler が `requestId` を生成し、AppError 発生時は Resend/Sentry に通知 |
+
+> **現状の実装状況**: `requestId` は `/api/sync-user` と `/api/admin/allowlist` に実装済み。`/api/chat` と `/api/conversations*` には未実装（TODO: 全 API への `requestId` 導入は今後のタスク）。`/api/health` は軽量監視用のため `requestId` 対象外。
 
 ---
 
@@ -102,18 +104,15 @@
 
 ```
 HTTP/1.1 200 OK
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/event-stream
 Transfer-Encoding: chunked
-X-Vercel-AI-Data-Stream: true
-
-0:"もちろんです。"
-0:"どの"
-0:"分野"
-...
+x-vercel-ai-ui-message-stream: v1
+x-conversation-id: <uuid>
 ```
 
-* 通常の JSON レスポンスではなく、Vercel AI SDK Data Stream Protocol に従ったテキストストリームが返却される。
+* Vercel AI SDK v6 の **UI Message Stream Protocol** (`toUIMessageStreamResponse()`) に従ったストリーム応答。
 * クライアント側は `useChat` フックがこれを自動的にパースして状態を更新する。
+* `x-conversation-id` ヘッダで保存された会話 ID を返却する。
 
 ### エラーレスポンス
 
@@ -136,7 +135,7 @@ X-Vercel-AI-Data-Stream: true
 | **Method** | `GET` |
 | **Auth** | Supabase セッション必須 |
 | **役割** | 指定ユーザー（`auth.uid()`）の会話一覧を返す。 |
-| **Query** | `limit` (default 20, max 50), `cursor` (created_at と id を連結した文字列でページネーション) |
+| **Query** | `limit` (default 20, max 50), `cursor` (createdAt と id を連結した文字列でページネーション) |
 
 ### レスポンス例
 ```json
@@ -149,6 +148,8 @@ X-Vercel-AI-Data-Stream: true
 }
 ```
 > 並び順は `created_at desc` 固定。`cursor` は前回レスポンスの `nextCursor` をそのまま渡す。
+>
+> **実装状況**: 現在の一覧 API は `created_at`（snake_case）で返却している。`createdAt`（camelCase）への統一は TODO。
 
 ## `/api/conversations/[id]` — 会話詳細取得（新規追加）
 
@@ -157,7 +158,7 @@ X-Vercel-AI-Data-Stream: true
 | **Method** | `GET` |
 | **Auth** | Supabase セッション必須 |
 | **役割** | 指定会話IDのメッセージ一覧を返す。 |
-| **Query** | `limit` (default 50, max 200), `cursor` (created_at, id) |
+| **Query** | なし（β版では全メッセージを返却。大規模化時に `limit/cursor` 追加を検討） |
 
 ### レスポンス例
 ```json
@@ -286,20 +287,32 @@ X-Vercel-AI-Data-Stream: true
 
 ---
 
-## 既存 API（抜粋）
+## 全 API 一覧
 
-| パス | 内容 |
-|------|------|
-| `POST /api/chat` | 会話 + LLM 呼び出し（Service Role 書き込み） |
-| `POST /api/attachments/sign` | Storage 署名 URL を発行。`expiresIn=60s` |
-| `POST /api/reports/monthly` | 月次レポート生成。Cron / 管理 UI から呼び出し |
-| `POST /api/admin/grant` | 管理者ロールの付与。`x-internal-token` 必須 |
+> ✅ = 実装済み、🚧 = 未実装（仕様確定済み）
 
-各エンドポイントの詳細は別セクションで随時更新予定。許可リスト導入に伴い、`/api/chat` なども `requestId` を共有し、インシデント時に `/api/sync-user` の記録と突き合わせられるようにする。
+| パス | メソッド | 状態 | 内容 |
+|------|---------|------|------|
+| `/api/health` | GET | ✅ | ヘルスチェック（Edge Runtime） |
+| `/api/sync-user` | POST | ✅ | 初回ログイン同期 + ロール確認 |
+| `/api/chat` | POST | ✅ | 会話 + LLM 呼び出し（Service Role 書き込み） |
+| `/api/conversations` | GET | ✅ | 会話一覧取得 |
+| `/api/conversations/[id]` | GET | ✅ | 会話詳細取得 |
+| `/api/admin/allowlist` | GET/POST/PATCH | ✅ | 許可メール CRUD |
+| `/api/attachments/sign` | POST | 🚧 | Storage 署名 URL を発行。`expiresIn=60s` |
+| `/api/reports/monthly` | POST | 🚧 | 月次レポート一括生成（Cron / 管理 UI）。詳細は `docs/reports/monthly.md` |
+| `/api/reports/monthly` | GET | 🚧 | レポート一覧取得（生徒=自分のみ、スタッフ=全員）。詳細は `docs/reports/monthly.md` |
+| `/api/reports/monthly/csv` | GET | 🚧 | 全生徒の利用統計 CSV ダウンロード（スタッフのみ） |
+| `/api/admin/grant` | POST | 🚧 | スタッフ権限の付与/解除。`GRANT_ALLOWED_EMAILS` 制限。詳細は `docs/admin/grant.md` |
+| `/api/admin/grant` | GET | 🚧 | スタッフ一覧・操作履歴（`GRANT_ALLOWED_EMAILS` 制限） |
+| `/api/admin/conversations` | GET | 🚧 | 全生徒の会話一覧検索（スタッフのみ）。詳細は `docs/admin/conversations.md` |
+| `/api/admin/conversations/[id]` | GET | 🚧 | 会話詳細取得（スタッフのみ） |
+
+各エンドポイントの詳細は対応する仕様ドキュメントを参照。
 
 ---
 
 ## LLM フォールバック戦略（メモ）
 
-許可リスト追加に伴う変更は無いが、すべての API が `requestId` を共有することで、LLM エラー通知に「どの生徒が実行したか」を追跡できる。`/api/chat` の実装では `requestId` を `conversation.request_id` に書き込み、月次レポートや監査で利用する。
+`requestId` を全 API に導入することで、LLM エラー通知に「どの生徒が実行したか」を追跡できる。将来的に `conversations` テーブルに `request_id` 列を追加し、月次レポートや監査で利用することも検討。
 

@@ -1,6 +1,6 @@
 # 塾向けチャットボット（β）
 
-> **目的**：生徒がテキスト/画像で質問し、AI（Markdown/数式対応）が回答。会話は保存され、塾スタッフが閲覧し、月末にレポート（CSV/HTML）を受け取る。
+> **目的**：生徒がテキスト/画像で質問し、AI（Markdown/数式対応）が回答。会話は保存され、塾スタッフが閲覧。月末に LLM が生徒個別の学習レポートを自動生成し、UI で閲覧できる。
 
 **スタック**：Next.js (Vercel) + Supabase (Postgres/Auth/Storage) + Resend (メール)  
 **方針**：機能単位ディレクトリ、RLS で厳密権限、Vitest（日本語 describe）、Service Role はサーバー API でのみ使用
@@ -25,15 +25,16 @@
 
 ### 対象
 
-* **生徒（ユーザー）**：テキスト/画像で質問、AI 応答を閲覧、履歴確認
-* **塾スタッフ（管理者）**：全生徒の会話検索/閲覧、月次レポート受信
+* **生徒（ユーザー）**：テキスト/画像で質問、AI 応答を閲覧、履歴確認、月次学習レポート閲覧
+* **塾スタッフ（管理者）**：全生徒の会話検索/閲覧、月次レポート管理、スタッフ権限付与
 
 ### 範囲（β/約20名）
 
 * テキスト/画像の質問 → AI 応答（Markdown/KaTeX）
 * 会話保存・履歴
 * スタッフの会話検索/閲覧
-* 月次レポート（CSV/HTML）を管理者メール送信
+* LLM 分析による生徒個別学習レポート（Web UI 閲覧 + CSV ダウンロード）
+* スタッフ権限付与（指定メンバーのみ）
 
 ### 非機能
 
@@ -99,7 +100,8 @@ pnpm dev
 | [operational/runbook.md](./docs/operational/runbook.md) | エラー対処設計、LLM 障害対応、月次レポート失敗リトライ、インシデント対応チェックリスト |
 | [operational/monitoring.md](./docs/operational/monitoring.md) | 監視・通知方針（S1/S2/S3）、レート制限・月間クォータ仕様 |
 | [admin/conversations.md](./docs/admin/conversations.md) | スタッフ会話検索・閲覧仕様（検索条件/UI/API） |
-| [reports/monthly.md](./docs/reports/monthly.md) | 月次レポート仕様（指標/形式/送信先/Cron/手動リトライ） |
+| [admin/grant.md](./docs/admin/grant.md) | スタッフ権限付与仕様（UI/API/監査ログ/セキュリティ） |
+| [reports/monthly.md](./docs/reports/monthly.md) | 月次レポート仕様（LLM 分析・生徒個別レポート・生徒 UI・スタッフ管理 UI・CSV） |
 
 ---
 
@@ -107,8 +109,8 @@ pnpm dev
 
 * **フロント**：Next.js 14+ (App Router, TypeScript, Tailwind, Zustand)
 * **バックエンド**：Supabase (Auth/Postgres/Storage)、Next.js Route Handlers (Node.js runtime)
-* **LLM**：プライマリ + フォールバック（別ベンダー/エンドポイント推奨）
-* **メール**：Resend（SPF/DKIM/DMARC 必須）
+* **LLM**：チャット用（プライマリ + フォールバック）、レポート用（`REPORT_LLM_MODEL`、高推論モデル推奨）
+* **メール**：Resend（SPF/DKIM/DMARC 必須、レポートは通知のみ）
 * **スケジュール**：Vercel Cron（毎日 23:55 JST）
 * **テスト**：Vitest + React Testing Library
 * **品質**：ESLint + Prettier、TypeScript `strict: true`
@@ -123,16 +125,21 @@ pnpm dev
 .
 ├─ app/
 │  ├─ chat/page.tsx
+│  ├─ reports/page.tsx           # 生徒用月次レポート閲覧
 │  ├─ admin/
-│  │  ├─ page.tsx              # 会話検索 UI
-│  │  └─ allowlist/page.tsx    # 許可メール管理 UI（staff 限定）
+│  │  ├─ page.tsx              # スタッフダッシュボード
+│  │  ├─ allowlist/page.tsx    # 許可メール管理 UI（staff 限定）
+│  │  ├─ reports/page.tsx      # スタッフ用レポート管理 UI
+│  │  └─ grant/page.tsx        # スタッフ権限付与 UI
 │  ├─ api/
 │  │  ├─ chat/route.ts
 │  │  ├─ attachments/sign/route.ts
-│  │  ├─ reports/monthly/route.ts
+│  │  ├─ reports/monthly/route.ts       # POST(生成) / GET(生徒閲覧)
+│  │  ├─ reports/monthly/csv/route.ts   # GET(CSV ダウンロード・staffのみ)
 │  │  ├─ sync-user/route.ts
 │  │  └─ admin/
 │  │      ├─ grant/route.ts
+│  │      ├─ conversations/route.ts
 │  │      └─ allowlist/route.ts
 │  └─ layout.tsx / page.tsx / globals.css
 ├─ src/
@@ -249,7 +256,7 @@ docs: READMEを更新
 
 ## データベース
 
-* **Postgres (Supabase)**：allowed_email, app_user, conversation, message, attachment, monthly_summary, usage_counters, rate_limiter
+* **Postgres (Supabase)**：allowed_email, app_user, conversations, messages, attachments, monthly_report, audit_grant, audit_allowlist, usage_counters, rate_limiter
 * **RLS**：学生=自分のみ、スタッフ=全件
 * **Storage**：attachments バケット（署名 URL）
 
@@ -274,7 +281,7 @@ docs: READMEを更新
 
 * **Vercel**：Git 連携（PR → Preview、main → Production）
 * **環境変数**：Vercel Dashboard で設定
-* **Cron**：毎日 23:55 JST 実行 → 月末判定でレポート送信
+* **Cron**：毎日 23:55 JST 実行 → 月末判定で LLM 分析レポート生成（通知メール送信）
 * **CI/CD**：GitHub Actions（Lint → TypeCheck → Test → Build）
 
 詳細は [docs/deployment.md](./docs/deployment.md) を参照。
@@ -296,9 +303,10 @@ docs: READMEを更新
 
 - [ ] 生徒がテキスト/画像で質問し、Markdown/KaTeX で表示
 - [ ] RLS で生徒=自分のみ、スタッフ=全件（検証済み）
-- [ ] 月次レポート送信（手動リトライ可）
+- [ ] 月次 LLM 分析レポート生成（生徒が `/reports` で閲覧、スタッフが `/admin/reports` で管理・手動生成・ CSV ダウンロード）
 - [ ] LLM 障害時のフォールバック動作
-- [ ] すべての API が `requestId` を返し、S1 以上はメール通知
+- [ ] スタッフ権限付与（`/admin/grant` で指定メンバーのみ操作可）
+- [ ] エラーレスポンスを返す API に `requestId` が含まれ、S1 以上はメール通知
 - [ ] `pnpm test` / `pnpm typecheck` / `pnpm lint` / `pnpm build` が成功
 
 詳細は [docs/architecture.md](./docs/architecture.md) を参照。
