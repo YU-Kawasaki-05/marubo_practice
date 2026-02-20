@@ -1,8 +1,4 @@
-import { 
-  convertToModelMessages, 
-  type UIMessage, 
-  type ModelMessage 
-} from 'ai';
+import { convertToModelMessages, type ModelMessage, type UIMessage } from 'ai'
 
 /**
  * UIMessageの配列を安全にModelMessageの配列に変換するユーティリティ
@@ -16,41 +12,44 @@ import {
 export async function convertSafeMessages(messages: UIMessage[]): Promise<ModelMessage[]> {
   // 1. 入力値のバリデーション（null/undefinedチェック）
   if (!Array.isArray(messages)) {
-    console.warn('convertSafeMessages received non-array input:', messages);
-    return [];
+    console.warn('convertSafeMessages received non-array input:', messages)
+    return []
   }
 
   // 2. 前処理（Pre-processing）
   // SDKの変換関数に渡す前に、UIMessageとして不完全なオブジェクトを修復する
+  type UIMessageWithLegacyContent = UIMessage & { content?: string }
+
   const sanitizedMessages: UIMessage[] = messages.map((msg, index) => {
     // 必須フィールドの存在確認
     if (!msg.role) {
-      throw new Error(`Message at index ${index} is missing 'role' property.`);
+      throw new Error(`Message at index ${index} is missing 'role' property.`)
     }
 
     // partsが存在せず、contentが文字列の場合の正規化
     // v6のconvertToModelMessagesはpartsの存在を期待するケースがあるため、明示的に構築する
-    const msgAny = msg as any
-    if (!msg.parts && typeof msgAny.content === 'string') {
+    const runtimeParts = (msg as { parts?: unknown }).parts
+    const legacyMessage = msg as UIMessageWithLegacyContent
+    if (!Array.isArray(runtimeParts) && typeof legacyMessage.content === 'string') {
       return {
         ...msg,
-        parts: [{ type: 'text', text: msgAny.content } as const],
+        parts: [{ type: 'text', text: legacyMessage.content } as const],
       }
     }
 
     // 既にpartsが存在する場合、またはcontentもpartsもない場合（空メッセージ）はそのまま通過させる
-    return msg;
-  });
+    return msg
+  })
 
   // 3. 非同期変換の実行
   try {
     // convertToModelMessagesは内部でツールの呼び出しと結果の紐付け（split）を行うため、
     // 自前でmap処理を書くよりも公式関数を利用する方が安全である。
-    const modelMessages = await convertToModelMessages(sanitizedMessages);
-    return modelMessages;
+    const modelMessages = await convertToModelMessages(sanitizedMessages)
+    return modelMessages
   } catch (error) {
-    console.error('Failed to convert messages to model format:', error);
+    console.error('Failed to convert messages to model format:', error)
     // エラーハンドリング: 必要に応じて空配列を返すか、エラーを再スローする
-    throw error;
+    throw error
   }
 }

@@ -2,9 +2,8 @@
  * GET /api/conversations/[id] — 会話詳細 + メッセージ一覧
  */
 
-import { NextResponse } from 'next/server'
-
 import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
 
 import type { Database } from '@shared/types/database'
 

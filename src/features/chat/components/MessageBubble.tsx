@@ -1,6 +1,8 @@
 import { type UIMessage } from 'ai'
-import { MemoizedMarkdown } from './MemoizedMarkdown'
+
 import { normalizeMathDelimiters } from '../utils/normalizeMath'
+
+import { MemoizedMarkdown } from './MemoizedMarkdown'
 
 interface MessageBubbleProps {
   message: UIMessage
@@ -8,14 +10,14 @@ interface MessageBubbleProps {
 
 export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.role === 'user'
+  const legacyContentMessage = message as UIMessage & { content?: string }
 
   // AI SDK v6 Data Stream Protocol対応:
   // message.content が空でも message.parts にテキストが含まれている場合はそれを結合して表示する
   const rawContent =
-    (message as any).content ||
+    (typeof legacyContentMessage.content === 'string' ? legacyContentMessage.content : '') ||
     message.parts
-      ?.filter((part) => part.type === 'text')
-      .map((part) => part.text)
+      .flatMap((part) => (part.type === 'text' ? [part.text] : []))
       .join('') ||
     ''
 

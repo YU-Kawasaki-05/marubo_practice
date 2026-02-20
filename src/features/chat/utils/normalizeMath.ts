@@ -21,7 +21,7 @@ export function normalizeMathDelimiters(text: string): string {
   // 1. \[ ... \] -> $$ ... $$ (ブロック数式)
   // 2. \( ... \) -> $ ... $ (インライン数式)
   // 補足: \ をエスケープするために \\ と記述
-  let normalized = textWithPlaceholders
+  const normalized = textWithPlaceholders
     .replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$') // \[ ... \] -> $$ ... $$
     .replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$')     // \( ... \) -> $ ... $
 
