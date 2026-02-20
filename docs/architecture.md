@@ -129,7 +129,7 @@
 │  │  ├─ reports/monthly/csv/route.ts
 │  │  ├─ sync-user/route.ts
 │  │  └─ admin/
-│  │      ├─ grant/route.ts       # 管理者ロール付与（Service Role + 内部トークン）
+│  │      ├─ grant/route.ts       # 管理者ロール付与（requireStaff() + GRANT_ALLOWED_EMAILS）
 │  │      └─ allowlist/route.ts   # 許可メール CRUD（staff UI 用）
 │  ├─ layout.tsx  # KaTeX CSSのimportをここで実施
 │  └─ page.tsx / globals.css
@@ -167,7 +167,7 @@
 
 * **Supabase Auth（Google OAuth）**を使用
 * 初回ログイン時に `/api/sync-user` で `allowed_email` テーブル（`status = 'active'`）を参照し、許可されているメールかをチェック → OK なら `app_user` に upsert（role は student 固定）
-* スタッフへの昇格は `/api/admin/grant` で実施（内部トークン必須）
+* スタッフへの昇格は `/api/admin/grant` で実施（`requireStaff()` + `GRANT_ALLOWED_EMAILS` 制限）
 * JWT の `app_metadata.role` を RLS が参照し、権限を制御
 
 詳細は [セキュリティポリシー](./security.md) を参照。
@@ -239,7 +239,7 @@ const customSchema = {
 - [ ] 自分の会話のみ閲覧、スタッフは**全件**（RLS 検証済み）
 - [ ] **毎日 23:55 実行**で**月末のみ**生徒個別レポート生成（手動リトライ可）
 - [ ] LLM 障害/429 で**即時案内＋自動再試行/フォールバック**
-- [ ] すべての API が **`requestId`** を返し、S1 以上は**メール通知**
+- [ ] エラーレスポンスを返す API に **`requestId`** が含まれ、S1 以上は**メール通知**
 
 ### 非機能要件
 

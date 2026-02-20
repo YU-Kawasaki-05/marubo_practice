@@ -18,7 +18,7 @@
 ## 技術スタックとアーキテクチャ
 - フロント：Next.js 14 App Router + TypeScript + Tailwind + Zustand。Markdown/LaTeX は react-markdown + remark/rehype の組み合わせで描画。【F:docs/architecture.md†L55-L64】
 - バックエンド：Next.js Route Handlers (Node runtime) から Supabase（Auth/Postgres/Storage）を利用。LLM はプライマリとフォールバックを切り替え可能。【F:docs/architecture.md†L55-L65】
-- バッチ/メール：Vercel Cron（毎日 23:55 JST）で月次レポート送信。Resend を使用し、SPF/DKIM/DMARC 必須。【F:docs/architecture.md†L55-L67】
+- バッチ/メール：Vercel Cron（毎日 23:55 JST）で月次レポート生成（LLM 分析 → DB 保存 → 通知メール）。Resend を使用し、SPF/DKIM/DMARC 必須。【F:docs/architecture.md†L55-L67】
 - 主要ルート：/app/chat (生徒 UI)、/app/admin (スタッフ UI)、/app/api/** にチャット送信・添付署名発行・月次レポート・ユーザー同期・管理者付与などを実装。【F:docs/architecture.md†L73-L101】
 
 ## ディレクトリ構成（抜粋）
