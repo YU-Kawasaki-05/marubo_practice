@@ -131,7 +131,7 @@ WHERE bucket_id = 'attachments'
 -- auth.uid() に紐づく app_user があるか
 SELECT id, auth_uid, role
 FROM app_user
-WHERE auth_uid = '<auth.uid()>';
+WHERE auth_uid = '<paste-actual-auth-uid-here>';
 ```
 
 JWT をデコードして `app_metadata.role` が想定（`student` or `staff`）になっているか確認し、必要なら再ログインしてトークンを更新する。

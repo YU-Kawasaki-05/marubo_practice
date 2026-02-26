@@ -128,7 +128,7 @@ pnpm format
 2. 以下で作成
    * Name: `attachments`
    * Public bucket: `OFF`（非公開）
-3. SQL Editor で `docs/database.md` の Storage policy（`attachments_read`）を実行
+3. SQL Editor で `docs/database.md` の `### Storage バケット/ポリシー` 節にある `create policy attachments_read on storage.objects ...` を実行
 4. SQL Editor で確認
    ```sql
    select id, name, public
