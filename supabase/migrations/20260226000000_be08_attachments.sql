@@ -17,21 +17,21 @@ create policy attachments_owner_all
   on attachments
   for all
   using (
-    user_id = auth.uid()
-    and exists (
+    exists (
       select 1 from messages m
       join conversations c on c.id = m.conversation_id
       where m.id = attachments.message_id
         and c.user_id = auth.uid()
+        and c.user_id = attachments.user_id
     )
   )
   with check (
-    user_id = auth.uid()
-    and exists (
+    exists (
       select 1 from messages m
       join conversations c on c.id = m.conversation_id
       where m.id = attachments.message_id
         and c.user_id = auth.uid()
+        and c.user_id = attachments.user_id
     )
   );
 
