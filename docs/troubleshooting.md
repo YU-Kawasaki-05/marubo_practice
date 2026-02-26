@@ -108,6 +108,7 @@ console.log(payload.app_metadata.role) // 'staff' であるべき
 
 * 署名 URL の有効期限（60 秒）が切れている
 * Storage ポリシーのパス判定ミス
+* `app_user` 未同期 / JWT ロール不整合でポリシー条件を満たしていない（権限問題）
 
 ### 解決方法
 
@@ -124,7 +125,18 @@ WHERE bucket_id = 'attachments'
   AND name LIKE 'user-id-here/%';
 ```
 
-3. **パス規約の徹底**：`{user_id}/{conversation_id}/{message_id}/{uuid}.{ext}`
+3. **権限の切り分け**（student/staff とも確認）：
+
+```sql
+-- auth.uid() に紐づく app_user があるか
+SELECT id, auth_uid, role
+FROM app_user
+WHERE auth_uid = '<auth.uid()>';
+```
+
+JWT をデコードして `app_metadata.role` が想定（`student` or `staff`）になっているか確認し、必要なら再ログインしてトークンを更新する。
+
+4. **パス規約の徹底**：`{user_id}/{conversation_id}/{message_id}/{uuid}.{ext}`
 
 ---
 

@@ -46,7 +46,7 @@
 | **BE-06** | review | Supabase CLI マイグレーション運用 | (実装済み) `package.json` に `db:push:dry` / `db:push` を追加し、`docs/deployment.md` に本番適用の安全手順（dry-run → push）を追記済み。 |
 | **BE-07** | review | Supabase モック切替 | (実装済み) `MOCK_SUPABASE=true` でメモリモックに切り替わる仕組みを実装済み。 |
 | **BE-08** | review | 画像添付テーブル & RLS | (実装済み) `supabase/migrations/20260226000000_be08_attachments.sql` を追加し、`attachments` テーブル（message_id, user_id, storage_path, mime_type, size_bytes, created_at）と RLS（本人 + staff）を実装。`src/shared/types/database.ts` に `attachments` 型定義を反映済み。 |
-| **BE-09** | todo | Storage バケット準備 | **Step 1**: Supabase Storage に `attachments` バケットを作成。<br>**Step 2**: Storage RLS/CORS を設定（アップロードは署名URLのみ）。<br>**Step 3**: `docs/deployment.md` にセットアップ手順を追記。 |
+| **BE-09** | review | Storage バケット準備 | (手順書更新済み) `docs/deployment.md` に `attachments` バケット作成 / Storage policy 確認 / CORS 確認手順を追記。<br>※ 実環境への作成・設定は Supabase コンソールでの手動作業。 |
 | **BE-10** | todo | 画像アップロード署名 API | **Step 1**: `app/api/attachments/sign/route.ts` を新規実装（認証必須）。<br>**Step 2**: mime/サイズ/拡張子のバリデーションを追加。<br>**Step 3**: `createSignedUploadUrl` で署名URLを返す。 |
 | **BE-11** | todo | チャット保存で添付を永続化 | **Step 1**: `/api/chat` のリクエストに `attachments` を受け付ける（配列）。<br>**Step 2**: `messages` と `attachments` を紐付けて保存。<br>**Step 3**: 会話詳細 API で attachments 情報を返す。 |
 | **BE-12** | todo | スタッフ会話検索 API | **Step 1**: `app/api/admin/conversations` (一覧) を実装（staff認証必須）。<br>**Step 2**: フィルタ（email/user_id/期間/キーワード）とページネーションを追加。<br>**Step 3**: `app/api/admin/conversations/[id]`（詳細）を実装。 |

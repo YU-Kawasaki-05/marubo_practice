@@ -120,6 +120,33 @@ pnpm format
 
 * Seed/Import は `scripts/` 配下（例：`scripts/seed-allowlist.ts`）
 
+#### 3. Storage（attachments バケット）手動セットアップ
+
+> `attachments` バケット作成・Storage ポリシー・CORS は **Supabase コンソールでの手動作業**。
+
+1. Supabase Dashboard → **Storage** → **Buckets** → **New bucket**
+2. 以下で作成
+   * Name: `attachments`
+   * Public bucket: `OFF`（非公開）
+3. SQL Editor で `docs/database.md` の Storage policy（`attachments_read`）を実行
+4. SQL Editor で確認
+   ```sql
+   select id, name, public
+   from storage.buckets
+   where id = 'attachments';
+
+   select policyname, cmd
+   from pg_policies
+   where schemaname = 'storage'
+     and tablename = 'objects'
+     and policyname = 'attachments_read';
+   ```
+5. Supabase Dashboard → **Project Settings** → **API** → CORS（Allowed Origins）で、少なくとも以下が許可されていることを確認
+   * `http://localhost:3000`
+   * Preview / Production のフロントエンド URL
+
+> 運用ルール：アップロードは署名 URL 経由のみ（`attachments` バケットを public にしない）。
+
 ---
 
 ## デプロイメント
