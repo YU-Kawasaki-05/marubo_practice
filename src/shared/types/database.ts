@@ -158,6 +158,43 @@ export type Database = {
           },
         ]
       }
+      attachments: {
+        Row: {
+          id: string
+          message_id: string
+          user_id: string
+          storage_path: string
+          mime_type: string | null
+          size_bytes: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          message_id: string
+          user_id: string
+          storage_path: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          created_at?: string
+        }
+        Update: Partial<{
+          id: string
+          message_id: string
+          user_id: string
+          storage_path: string
+          mime_type: string | null
+          size_bytes: number | null
+          created_at: string
+        }>
+        Relationships: [
+          {
+            foreignKeyName: 'attachments_message_id_fkey'
+            columns: ['message_id']
+            referencedRelation: 'messages'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>

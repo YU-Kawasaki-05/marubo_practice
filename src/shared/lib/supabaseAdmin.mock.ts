@@ -13,6 +13,7 @@ type TableName = keyof Database['public']['Tables']
 
 type ConversationRow = Database['public']['Tables']['conversations']['Row']
 type MessageRow = Database['public']['Tables']['messages']['Row']
+type AttachmentRow = Database['public']['Tables']['attachments']['Row']
 
 type TableMap = {
   allowed_email: AllowedEmailRow[]
@@ -20,6 +21,7 @@ type TableMap = {
   app_user: AppUserRow[]
   conversations: ConversationRow[]
   messages: MessageRow[]
+  attachments: AttachmentRow[]
 }
 
 type FilterFn<T> = (row: T) => boolean
@@ -212,6 +214,7 @@ class MockSupabaseAdminClient {
     ],
     conversations: [],
     messages: [],
+    attachments: [],
   }
 
   auth = {

@@ -45,7 +45,7 @@
 | **BE-05** | review | seed/import スクリプト | (実装済み) `scripts/seed-allowlist.ts` を作成。`scripts/data/allowlist.sample.csv` からデータを読み込み、Seed Bot ユーザー経由で DB に登録/更新できることを確認。 |
 | **BE-06** | review | Supabase CLI マイグレーション運用 | (実装済み) `package.json` に `db:push:dry` / `db:push` を追加し、`docs/deployment.md` に本番適用の安全手順（dry-run → push）を追記済み。 |
 | **BE-07** | review | Supabase モック切替 | (実装済み) `MOCK_SUPABASE=true` でメモリモックに切り替わる仕組みを実装済み。 |
-| **BE-08** | todo | 画像添付テーブル & RLS | **Step 1**: `supabase/migrations/` に `attachments` テーブルを追加（message_id, user_id, storage_path, mime_type, size, created_at）。<br>**Step 2**: RLS ポリシー（本人のみ読取/作成可）を追加。<br>**Step 3**: `src/shared/types/database.ts` を更新。 |
+| **BE-08** | review | 画像添付テーブル & RLS | (実装済み) `supabase/migrations/20260226000000_be08_attachments.sql` を追加し、`attachments` テーブル（message_id, user_id, storage_path, mime_type, size_bytes, created_at）と RLS（本人 + staff）を実装。`src/shared/types/database.ts` に `attachments` 型定義を反映済み。 |
 | **BE-09** | todo | Storage バケット準備 | **Step 1**: Supabase Storage に `attachments` バケットを作成。<br>**Step 2**: Storage RLS/CORS を設定（アップロードは署名URLのみ）。<br>**Step 3**: `docs/deployment.md` にセットアップ手順を追記。 |
 | **BE-10** | todo | 画像アップロード署名 API | **Step 1**: `app/api/attachments/sign/route.ts` を新規実装（認証必須）。<br>**Step 2**: mime/サイズ/拡張子のバリデーションを追加。<br>**Step 3**: `createSignedUploadUrl` で署名URLを返す。 |
 | **BE-11** | todo | チャット保存で添付を永続化 | **Step 1**: `/api/chat` のリクエストに `attachments` を受け付ける（配列）。<br>**Step 2**: `messages` と `attachments` を紐付けて保存。<br>**Step 3**: 会話詳細 API で attachments 情報を返す。 |
