@@ -1,0 +1,180 @@
+<mxfile host="app.diagrams.net" modified="2026-03-01T12:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="feature-map" name="機能マップ">
+    <mxGraphModel dx="1422" dy="962" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ルート -->
+        <mxCell id="root" value="&lt;b&gt;marubo_ai&lt;/b&gt;&lt;br&gt;塾向けAIチャットボット" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#333333;fontColor=#FFFFFF;strokeColor=#333333;fontSize=14;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="440" y="20" width="260" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ========== 認証・アクセス制御（青）========== -->
+        <mxCell id="cat1" value="&lt;b&gt;認証・アクセス制御&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="120" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fr01" value="&lt;b&gt;FR-01&lt;/b&gt; ユーザー認証" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="200" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr01-1" value="サインアップ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr01-2" value="ログイン" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="115" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr01-3" value="JWT管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="288" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr01-5" value="ユーザー同期" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="115" y="288" width="85" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fr02" value="&lt;b&gt;FR-02&lt;/b&gt; 許可リスト管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="20" y="340" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr02-1" value="一覧表示" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr02-2" value="個別追加" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="115" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr02-3" value="ステータス更新" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="20" y="428" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr02-4" value="CSVインポート" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="115" y="428" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr02-g" value="AllowlistGuard / 監査ログ / メール正規化" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EBF3FE;strokeColor=#6c8ebf;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="20" y="466" width="180" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ========== チャット機能（緑）========== -->
+        <mxCell id="cat2" value="&lt;b&gt;チャット機能&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="300" y="120" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fr03" value="&lt;b&gt;FR-03&lt;/b&gt; AIチャット" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="200" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr03-1" value="ストリーミング" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr03-2" value="システムプロンプト" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="375" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr03-3" value="LaTeX数式" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="288" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr03-4" value="Markdown" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="375" y="288" width="85" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fr04" value="&lt;b&gt;FR-04&lt;/b&gt; 画像添付" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="340" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr04-1" value="ファイル選択/D&amp;D" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="280" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr04-2" value="署名URL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="375" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr04-3" value="プレビュー / ライトボックス / バリデーション" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="280" y="428" width="180" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fr05" value="&lt;b&gt;FR-05&lt;/b&gt; 会話履歴" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="480" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr05-1" value="自動保存" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="280" y="530" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr05-2" value="サイドバー" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E1;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="375" y="530" width="85" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ========== 管理機能（オレンジ）========== -->
+        <mxCell id="cat3" value="&lt;b&gt;管理機能&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="570" y="120" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fr06" value="&lt;b&gt;FR-06&lt;/b&gt; 管理者会話検索" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="550" y="200" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr06-1" value="メール検索" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr06-2" value="日付範囲" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="645" y="250" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr06-3" value="キーワード検索 / ページネーション / 詳細展開" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="550" y="288" width="180" height="28" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fr07" value="&lt;b&gt;FR-07&lt;/b&gt; スタッフ権限管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="550" y="340" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr07-1" value="権限付与" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="550" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr07-2" value="権限剥奪" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="645" y="390" width="85" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="fr07-3" value="自己剥奪防止 / ホワイトリスト / 監査ログ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E1;strokeColor=#d6b656;fontSize=9;" vertex="1" parent="1">
+          <mxGeometry x="550" y="428" width="180" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ========== システム管理（紫）========== -->
+        <mxCell id="cat4" value="&lt;b&gt;システム管理&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="840" y="120" width="220" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="fr08" value="&lt;b&gt;FR-08&lt;/b&gt; ヘルスチェック" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="860" y="200" width="180" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="fr08-1" value="GET /api/health&lt;br&gt;Edge Runtime" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E8F9;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="860" y="250" width="180" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ===== 接続線 ===== -->
+        <!-- root → categories -->
+        <mxCell id="c1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" source="root" target="cat1" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" source="root" target="cat2" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" source="root" target="cat3" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=1.5;" edge="1" source="root" target="cat4" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- categories → FRs -->
+        <mxCell id="c5" style="rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="cat1" target="fr01" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" style="rounded=1;strokeColor=#6c8ebf;strokeWidth=1;" edge="1" source="cat1" target="fr02" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" style="rounded=1;strokeColor=#82b366;strokeWidth=1;" edge="1" source="cat2" target="fr03" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" style="rounded=1;strokeColor=#82b366;strokeWidth=1;" edge="1" source="cat2" target="fr04" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" style="rounded=1;strokeColor=#82b366;strokeWidth=1;" edge="1" source="cat2" target="fr05" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" style="rounded=1;strokeColor=#d6b656;strokeWidth=1;" edge="1" source="cat3" target="fr06" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" style="rounded=1;strokeColor=#d6b656;strokeWidth=1;" edge="1" source="cat3" target="fr07" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" style="rounded=1;strokeColor=#9673a6;strokeWidth=1;" edge="1" source="cat4" target="fr08" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

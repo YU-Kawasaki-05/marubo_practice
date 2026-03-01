@@ -1,0 +1,140 @@
+<mxfile host="app.diagrams.net" modified="2026-03-01T12:00:00.000Z" agent="Claude" version="24.0.0" type="device">
+  <diagram id="system-architecture" name="システム構成図">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- クライアント（ブラウザ）グループ -->
+        <mxCell id="client-group" value="クライアント（ブラウザ）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontStyle=1;fontSize=14;arcSize=10;container=1;collapsible=0;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="340" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="fe" value="&lt;b&gt;Next.js Frontend&lt;/b&gt;&lt;br&gt;React 18 + Tailwind CSS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="client-group">
+          <mxGeometry x="20" y="50" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="zustand" value="&lt;b&gt;Zustand Store&lt;/b&gt;&lt;br&gt;状態管理" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="client-group">
+          <mxGeometry x="20" y="125" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- サーバー（Vercel）グループ -->
+        <mxCell id="server-group" value="サーバー（Vercel）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;verticalAlign=top;fontStyle=1;fontSize=14;arcSize=10;container=1;collapsible=0;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="460" y="40" width="260" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="api" value="&lt;b&gt;Next.js App Router&lt;/b&gt;&lt;br&gt;API Route Handlers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=12;" vertex="1" parent="server-group">
+          <mxGeometry x="30" y="50" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="mw" value="&lt;b&gt;認証・認可ミドルウェア&lt;/b&gt;&lt;br&gt;requireStaff / Bearer Token" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#82b366;fontSize=12;" vertex="1" parent="server-group">
+          <mxGeometry x="30" y="125" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- 外部サービスグループ -->
+        <mxCell id="external-group" value="外部サービス" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;fontStyle=1;fontSize=14;arcSize=10;container=1;collapsible=0;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="800" y="10" width="330" height="510" as="geometry" />
+        </mxCell>
+        <mxCell id="sa" value="&lt;b&gt;Supabase Auth&lt;/b&gt;&lt;br&gt;認証" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="external-group">
+          <mxGeometry x="65" y="50" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="sp" value="&lt;b&gt;Supabase PostgreSQL&lt;/b&gt;&lt;br&gt;データベース + RLS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="external-group">
+          <mxGeometry x="65" y="125" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="ss" value="&lt;b&gt;Supabase Storage&lt;/b&gt;&lt;br&gt;画像ストレージ" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="external-group">
+          <mxGeometry x="65" y="200" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="oai" value="&lt;b&gt;OpenAI API&lt;/b&gt;&lt;br&gt;GPT-4o-mini" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="external-group">
+          <mxGeometry x="65" y="275" width="200" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="rs" value="&lt;b&gt;Resend&lt;/b&gt;&lt;br&gt;メール送信（将来）" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f0f0f0;strokeColor=#b3b3b3;fontSize=12;fontColor=#999999;" vertex="1" parent="external-group">
+          <mxGeometry x="65" y="350" width="200" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- 接続線 -->
+        <!-- FE → API: HTTP/Bearer Token -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=2;fontSize=11;" edge="1" source="fe" target="api" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1-label" value="HTTP / Bearer Token" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" connectable="0" parent="e1">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- FE → Zustand -->
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#6c8ebf;strokeWidth=1;fontSize=11;" edge="1" source="fe" target="zustand" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API → MW -->
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#82b366;strokeWidth=1;fontSize=11;" edge="1" source="api" target="mw" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- MW → Supabase Auth: JWT検証 -->
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=2;fontSize=11;" edge="1" source="mw" target="sa" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4-label" value="JWT検証" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" connectable="0" parent="e4">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → PostgreSQL: Service Role -->
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=2;fontSize=11;" edge="1" source="api" target="sp" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5-label" value="Service Role" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" connectable="0" parent="e5">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → Storage: 署名URL -->
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=2;fontSize=11;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" source="api" target="ss" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6-label" value="署名URL" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" connectable="0" parent="e6">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API → OpenAI: streamText -->
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#333333;strokeWidth=2;fontSize=11;" edge="1" source="api" target="oai" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7-label" value="streamText" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#333333;" vertex="1" connectable="0" parent="e7">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- API -.-> Resend: 将来 -->
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#b3b3b3;strokeWidth=1;dashed=1;fontSize=11;" edge="1" source="api" target="rs" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8-label" value="将来" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#999999;" vertex="1" connectable="0" parent="e8">
+          <mxGeometry x="-0.1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- FE → Storage: 直接アップロード -->
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;strokeColor=#d6b656;strokeWidth=2;fontSize=11;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="fe" target="ss" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="140" y="330" />
+              <mxPoint x="780" y="330" />
+              <mxPoint x="780" y="238" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e9-label" value="直接アップロード" style="edgeLabel;html=1;align=center;verticalAlign=middle;fontSize=11;fontColor=#d6b656;" vertex="1" connectable="0" parent="e9">
+          <mxGeometry x="-0.3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
